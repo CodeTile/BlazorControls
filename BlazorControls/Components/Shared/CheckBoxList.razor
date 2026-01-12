@@ -1,0 +1,27 @@
+﻿@typeparam TItem
+
+<div class="fui-checklist">
+    @foreach (var item in Data)
+    {
+        string text;
+        string value;
+
+        if (typeof(TItem) == typeof(string))
+        {
+            text = item?.ToString();
+            value = item?.ToString();
+        }
+        else
+        {
+            text = TextField(item);
+            value = ValueField(item)?.ToString();
+        }
+
+        <label class="fui-checklist-item">
+            <input type="checkbox"
+                   checked="@SelectedValues.Contains(value)"
+                   @onchange="e => ToggleValue(value, text, e.Value)">
+            <span>@text</span>
+        </label>
+    }
+</div>

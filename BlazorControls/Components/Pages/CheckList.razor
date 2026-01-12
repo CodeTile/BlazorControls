@@ -1,0 +1,65 @@
+﻿@page "/checklist"
+@using BlazorControls.Components.Shared
+@using BlazorControls.Data
+@using BlazorControls.Data.Models
+@rendermode InteractiveServer
+
+
+<h2>Reusable CheckBoxList Demo</h2>
+<br />
+
+    <!-- Scenario 1: Complex Objects (Employee) -->
+    <h3>1. Employees (Object List)</h3>
+
+    <CheckBoxList Data="@EmployeeList"
+                  TextField="@(e => e.FullName)"
+                  ValueField="@(e => e.EmployeeId)"
+                  SelectedValues="@SelectedEmployeeIds"
+                  SelectedValuesChanged="OnEmployeeIdsChanged"
+                  SelectedTexts="@SelectedEmployeeNames"
+                  SelectedTextsChanged="OnEmployeeNamesChanged" />
+
+    <div class="output-row">
+        <label>Selected Employee IDs:</label>
+        @EmployeeIdsOutput
+    </div>
+
+    <div class="output-row">
+        <label>Selected Employee Names:</label>
+        @EmployeeNamesOutput
+    </div>
+
+<br />
+
+    <!-- Scenario 2: Simple Strings -->
+    <h3>2. Colors (List of Strings)</h3>
+
+    <CheckBoxList Data="@ColorList"
+                  SelectedValues="@SelectedColors"
+                  SelectedValuesChanged="OnColorsChanged"
+                  SelectedTexts="@SelectedColorNames"
+                  SelectedTextsChanged="OnColorNamesChanged" />
+
+    <div class="output-row">
+        <label>Selected Colors:</label>
+        @ColorOutput
+    </div>
+
+    <br/>
+
+    <!-- Scenario 3: Objects with No Value Field -->
+    <h3>3. Departments (Object List, Text Only)</h3>
+
+    <CheckBoxList Data="@DepartmentList"
+                  TextField="@(d => d)"
+                  ValueField="@(d => d)"
+                  SelectedValues="@SelectedDepartments"
+                  SelectedValuesChanged="OnDepartmentsChanged"
+                  SelectedTexts="@SelectedDepartmentNames"
+                  SelectedTextsChanged="OnDepartmentNamesChanged" />
+
+    <div class="output-row">
+        <label>Selected Departments:</label>
+        @DepartmentOutput
+    </div>
+
