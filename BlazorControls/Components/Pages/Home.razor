@@ -1,0 +1,55 @@
+﻿@page "/"
+@using BlazorControls.Components.Shared
+@rendermode InteractiveServer
+
+<h3>Donut Chart Demo</h3>
+
+<div class="chart-wrapper">
+
+    <div class="chart-container">
+        <DonutChart Title="Sales by Region"
+                    InnerTitle="Total Sales"
+                    IsDonut="true"
+                    Thickness="40"
+                    Data="@SalesData"
+                    IncludeLabels="@CurrentSalesLabels"
+                    OnSliceClick="HandleSliceClick"
+                    OnCenterClick="HandleCenterClick" 
+                    ShowLegend="true" />
+
+        <div class="filter-text">
+            <strong>Filtered Regions:</strong>
+            @if (CurrentSalesLabels is not null)
+            {
+                <span>@string.Join(", ", CurrentSalesLabels)</span>
+            }
+            else
+            {
+                <span>(none)</span>
+            }
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <DonutChart Title="Task Breakdown"
+                    InnerTitle="Tasks"
+                    IsDonut="false"
+                    Items="@TaskItems"
+                    IncludeLabels="@CurrentTaskLabels"
+                    OnSliceClick="HandleSliceClick"
+                    ShowLegend="true" />
+
+        <div class="filter-text">
+            <strong>Filtered Tasks:</strong>
+            @if (CurrentTaskLabels is not null)
+            {
+                <span>@string.Join(", ", CurrentTaskLabels)</span>
+            }
+            else
+            {
+                <span>(none)</span>
+            }
+        </div>
+    </div>
+
+</div>
