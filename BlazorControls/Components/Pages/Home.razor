@@ -6,6 +6,7 @@
 
 <div class="chart-wrapper">
 
+    <!-- Donut Chart -->
     <div class="chart-container">
         <DonutChart Title="Sales by Region"
                     InnerTitle="Total Sales"
@@ -13,9 +14,11 @@
                     Thickness="40"
                     Data="@SalesData"
                     IncludeLabels="@CurrentSalesLabels"
+                    StatusColors="@SalesColors"
                     OnSliceClick="HandleSliceClick"
-                    OnCenterClick="HandleCenterClick" 
+                    OnCenterClick="HandleCenterClick"
                     ShowLegend="true" />
+
 
         <div class="filter-text">
             <strong>Filtered Regions:</strong>
@@ -30,14 +33,17 @@
         </div>
     </div>
 
+    <!-- Pie Chart -->
     <div class="chart-container">
         <DonutChart Title="Task Breakdown"
                     InnerTitle="Tasks"
                     IsDonut="false"
-                    Items="@TaskItems"
+                    Data="@TaskData"
                     IncludeLabels="@CurrentTaskLabels"
+                    StatusColors="@TaskColors"
                     OnSliceClick="HandleSliceClick"
                     ShowLegend="true" />
+
 
         <div class="filter-text">
             <strong>Filtered Tasks:</strong>

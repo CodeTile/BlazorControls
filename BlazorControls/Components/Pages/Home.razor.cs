@@ -21,21 +21,20 @@ public partial class Home : ComponentBase, IDisposable
 	private IEnumerable<string>? CurrentSalesLabels;
 
 	// -----------------------------
-	// Pie chart data
+	// Pie chart data (now a dictionary)
 	// -----------------------------
-	private IEnumerable<KeyValuePair<string, int>> TaskItems =
-		new List<KeyValuePair<string, int>>
-		{
-			new("Completed", 30),
-			new("In Progress", 15),
-			new("Blocked", 5)
-		};
+	private Dictionary<string, int> TaskData = new()
+	{
+		["Completed"] = 30,
+		["In Progress"] = 15,
+		["Blocked"] = 5
+	};
 
-	private List<string> AllTaskLabels => TaskItems.Select(t => t.Key).ToList();
+	private List<string> AllTaskLabels => TaskData.Keys.ToList();
 	private IEnumerable<string>? CurrentTaskLabels;
 
 	// -----------------------------
-	// Timers (fully qualified)
+	// Timers
 	// -----------------------------
 	private System.Timers.Timer? _salesTimer;
 
@@ -98,4 +97,21 @@ public partial class Home : ComponentBase, IDisposable
 		_salesTimer?.Dispose();
 		_taskTimer?.Dispose();
 	}
+
+	// Colours for Sales chart
+	private Dictionary<string, string> SalesColors = new()
+	{
+		["North"] = "#4CAF50",      // green
+		["South"] = "#2196F3",      // blue
+		["East"] = "#FFC107",       // amber
+		["West"] = "#F44336"        // red
+	};
+
+	// Colours for Task chart
+	private Dictionary<string, string> TaskColors = new()
+	{
+		["Completed"] = "#4CAF50",
+		["In Progress"] = "#FFC107",
+		["Blocked"] = "#F44336"
+	};
 }

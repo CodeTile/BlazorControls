@@ -3,136 +3,184 @@
 namespace BlazorControls.Components.Shared;
 
 /// <summary>
-/// A reusable SVG donut or pie chart component with slice interaction,
-/// tooltips, and empty-state handling.
+/// A reusable SVG-based donut or pie chart component supporting
+/// filtering, custom colours, legends, tooltips, and click events.
 /// </summary>
 public partial class DonutChart : ComponentBase
 {
 	/// <summary>
-	/// The title displayed above the chart.
+	/// Optional title displayed above the chart.
 	/// </summary>
 	[Parameter] public string? Title { get; set; }
 
 	/// <summary>
-	/// The inner title displayed inside the donut center.
-	/// Only applies when <see cref="IsDonut"/> is true.
+	/// Optional text displayed inside the donut hole when <see cref="IsDonut"/> is true.
 	/// </summary>
 	[Parameter] public string? InnerTitle { get; set; }
 
 	/// <summary>
-	/// Whether the chart is rendered as a donut (true) or pie (false).
+	/// Determines whether the chart renders as a donut (true) or a pie chart (false).
+	/// Defaults to true.
 	/// </summary>
-	[Parameter] public bool IsDonut { get; set; }
+	[Parameter] public bool IsDonut { get; set; } = true;
 
 	/// <summary>
 	/// Thickness of the donut ring.
+	/// Affects <see cref="InnerRadius"/> when <see cref="IsDonut"/> is true.
 	/// </summary>
 	[Parameter] public int Thickness { get; set; } = 20;
 
 	/// <summary>
-	/// Dictionary of values used for donut mode.
+	/// The primary data source for the chart.
+	/// Keys represent labels; values represent numeric quantities.
 	/// </summary>
 	[Parameter] public Dictionary<string, int>? Data { get; set; }
 
 	/// <summary>
-	/// List of label/value pairs used for pie mode.
-	/// </summary>
-	[Parameter] public IEnumerable<KeyValuePair<string, int>>? Items { get; set; }
-
-	/// <summary>
-	/// Labels to include in the chart.
+	/// Optional list of labels to include.
+	/// Any labels not in this list are excluded from rendering.
 	/// </summary>
 	[Parameter] public IEnumerable<string>? IncludeLabels { get; set; }
 
 	/// <summary>
-	/// Fired when a slice is clicked.
+	/// Explicit colour overrides for specific labels.
+	/// If a label exists in this dictionary, its colour is used.
+	/// </summary>
+	[Parameter] public Dictionary<string, string>? StatusColors { get; set; }
+
+	/// <summary>
+	/// A list of default colours used when no explicit colour is provided.
+	/// Colours cycle in order for each slice.
+	/// </summary>
+	[Parameter] public List<string>? DefaultColors { get; set; }
+
+	/// <summary>
+	/// Event fired when a slice is clicked.
+	/// The slice label is passed as the event argument.
 	/// </summary>
 	[Parameter] public EventCallback<string> OnSliceClick { get; set; }
 
 	/// <summary>
-	/// Fired when the donut center is clicked.
+	/// Event fired when the donut center is clicked.
+	/// Only applies when <see cref="IsDonut"/> is true.
 	/// </summary>
 	[Parameter] public EventCallback OnCenterClick { get; set; }
 
 	/// <summary>
-	/// Whether to display the legend below the chart.
+	/// Determines whether a legend is rendered below the chart.
 	/// </summary>
 	[Parameter] public bool ShowLegend { get; set; } = false;
 
 	/// <summary>
-	/// Computed total of all visible slice values.
-	/// </summary>
-	protected int TotalValue => Slices.Sum(s => s.Value);
-
-	/// <summary>
-	/// True when the chart contains no meaningful data.
-	/// </summary>
-	protected bool IsEmpty => TotalValue < 1;
-
-	/// <summary>
-	/// Inner radius of the donut ring.
-	/// </summary>
-	internal int InnerRadius => 100 - Thickness;
-
-	/// <summary>
-	/// List of computed slices.
+	/// The list of computed slices used for rendering.
 	/// </summary>
 	internal List<DonutSlice> Slices { get; private set; } = [];
 
 	/// <summary>
-	/// Whether the tooltip is visible.
+	/// The total value of all rendered slices.
 	/// </summary>
-	protected bool ShowTooltip { get; set; }
+	protected int TotalValue => Slices.Sum(s => s.Value);
 
 	/// <summary>
-	/// Tooltip label text.
+	/// The inner radius of the donut.
+	/// Donut mode: 90 - Thickness
+	/// Pie mode: 0
 	/// </summary>
-	protected string TooltipLabel { get; set; } = string.Empty;
+	internal int InnerRadius => IsDonut ? Math.Max(0, 90 - Thickness) : 0;
 
 	/// <summary>
-	/// Tooltip value text.
+	/// Whether the tooltip is currently visible.
 	/// </summary>
-	protected string TooltipValue { get; set; } = string.Empty;
+	internal bool ShowTooltip { get; set; }
 
 	/// <summary>
-	/// Rebuilds slices when parameters change.
+	/// The label displayed in the tooltip.
 	/// </summary>
+	internal string TooltipLabel { get; set; } = string.Empty;
+
+	/// <summary>
+	/// The numeric value displayed in the tooltip.
+	/// </summary>
+	internal string TooltipValue { get; set; } = string.Empty;
+
+	/// <inheritdoc />
 	protected override void OnParametersSet()
 	{
 		BuildSlices();
 	}
 
 	/// <summary>
-	/// Builds slice geometry from input data.
+	/// Builds the list of slices based on the provided data,
+	/// filtering rules, and colour configuration.
 	/// </summary>
 	private void BuildSlices()
 	{
 		Slices.Clear();
 
-		var source =
-			(IsDonut
-				? Data?.Where(d => IncludeLabels?.Contains(d.Key) ?? true)
-				: Items?.Where(i => IncludeLabels?.Contains(i.Key) ?? true))
-			?? Enumerable.Empty<KeyValuePair<string, int>>();
+		if (Data == null)
+			return;
 
-		// Remove zero-value and filter labels
-		source = source.Where(s => s.Value > 0);
+		var source = Data
+			.Where(d => IncludeLabels?.Contains(d.Key) ?? true)
+			.Where(d => d.Value > 0)
+			.ToList();
 
 		int total = source.Sum(s => s.Value);
 		if (total < 1)
 			return;
 
 		double startAngle = 0;
+		int colorIndex = 0;
 
 		foreach (var item in source)
 		{
 			double sweep = (item.Value / (double)total) * 360.0;
+			string color = ResolveColor(item.Key, ref colorIndex);
 
-			var slice = new DonutSlice(item.Key, item.Value, startAngle, sweep);
+			var slice = new DonutSlice(
+				item.Key,
+				item.Value,
+				startAngle,
+				sweep,
+				90,
+				InnerRadius,
+				color
+			);
+
 			Slices.Add(slice);
-
 			startAngle += sweep;
 		}
+	}
+
+	/// <summary>
+	/// Determines the colour for a given label using:
+	/// 1. Explicit status colours
+	/// 2. Default palette
+	/// 3. Stable fallback colour
+	/// </summary>
+	private string ResolveColor(string label, ref int index)
+	{
+		if (StatusColors != null && StatusColors.TryGetValue(label, out var explicitColor))
+			return explicitColor;
+
+		if (DefaultColors != null && DefaultColors.Count > 0)
+		{
+			string color = DefaultColors[index % DefaultColors.Count];
+			index++;
+			return color;
+		}
+
+		return GenerateColor(label);
+	}
+
+	/// <summary>
+	/// Generates a stable fallback colour based on the label's hash.
+	/// </summary>
+	private static string GenerateColor(string key)
+	{
+		int hash = key.GetHashCode();
+		var random = new Random(hash);
+		return $"hsl({random.Next(0, 360)}, 70%, 55%)";
 	}
 
 	private async Task OnSliceClickAsync(DonutSlice slice)
@@ -162,48 +210,5 @@ public partial class DonutChart : ComponentBase
 	private async Task OnCenterClickAsync()
 	{
 		await OnCenterClick.InvokeAsync();
-	}
-}
-
-/// <summary>
-/// Represents a single slice of the chart.
-/// </summary>
-public class DonutSlice
-{
-	public string Label { get; }
-	public int Value { get; }
-	public string PathData { get; }
-	public string Color { get; }
-
-	public DonutSlice(string label, int value, double startAngle, double sweepAngle)
-	{
-		Label = label;
-		Value = value;
-		Color = GenerateColor(label);
-		PathData = BuildPath(startAngle, sweepAngle);
-	}
-
-	private static string GenerateColor(string key)
-	{
-		int hash = key.GetHashCode();
-		var random = new Random(hash);
-		return $"hsl({random.Next(0, 360)}, 70%, 55%)";
-	}
-
-	private static string BuildPath(double startAngle, double sweepAngle)
-	{
-		double startRad = (Math.PI / 180) * startAngle;
-		double endRad = (Math.PI / 180) * (startAngle + sweepAngle);
-
-		double radius = 90; // reduced from 100
-
-		double x1 = 100 + radius * Math.Cos(startRad);
-		double y1 = 100 + radius * Math.Sin(startRad);
-		double x2 = 100 + radius * Math.Cos(endRad);
-		double y2 = 100 + radius * Math.Sin(endRad);
-
-		int largeArc = sweepAngle > 180 ? 1 : 0;
-
-		return $"M100,100 L{x1},{y1} A{radius},{radius} 0 {largeArc} 1 {x2},{y2} Z";
 	}
 }

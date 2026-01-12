@@ -1,6 +1,6 @@
-﻿using Bunit;
+﻿using BlazorControls.Components.Shared;
 
-using BlazorControls.Components.Shared;
+using Bunit;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 

@@ -1,80 +1,73 @@
-﻿@rendermode InteractiveServer
-@namespace BlazorControls.Components.Shared
-
-<div class="donut-chart-container">
+﻿<div class="donut-chart-container">
 
     @if (!string.IsNullOrWhiteSpace(Title))
     {
-        <div class="donut-chart-title">@Title</div>
+        <h3 class="chart-title">@Title</h3>
     }
 
-    <svg class="donut-chart-svg"
-         viewBox="0 0 200 220"
-         preserveAspectRatio="xMidYMid meet"
+    <svg viewBox="0 0 200 220"
+         class="donut-chart"
+         xmlns="http://www.w3.org/2000/svg"
          @onmouseleave="ClearHover">
 
-        <g transform="translate(0, 20)">
+        @* Render slices *@
+        @foreach (var slice in Slices)
+        {
+            <path class="@slice.CssClass"
+                  d="@slice.PathData"
+                  fill="@slice.Color"
+                  @onclick="() => OnSliceClickAsync(slice)"
+                  @onmouseover="() => OnSliceHover(slice)" />
+        }
 
-            <g class="donut-slices">
-                @foreach (var slice in Slices)
-                {
-                    <path d="@slice.PathData"
-                          fill="@slice.Color"
-                          class="donut-slice"
-                          @onclick="() => OnSliceClickAsync(slice)"
-                          @onmouseover="() => OnSliceHover(slice)">
-                    </path>
-                }
+        @* Donut center (only when IsDonut = true) *@
+        @if (IsDonut)
+        {
+            <g class="donut-center"
+               @onclick="OnCenterClickAsync"
+               @onmouseover="OnCenterHover"
+               @onmouseout="ClearHover">
+
+                <circle cx="100"
+                        cy="100"
+                        r="@InnerRadius"
+                        fill="white" />
             </g>
 
-            @if (IsDonut)
+            @if (!string.IsNullOrWhiteSpace(InnerTitle))
             {
-                <g class="donut-center"
-                   @onclick="OnCenterClickAsync"
-                   @onmouseover="OnCenterHover">
-
-                    <circle cx="100" cy="100" r="@InnerRadius" class="donut-center-circle" />
-
-                    @if (!string.IsNullOrWhiteSpace(InnerTitle))
-                    {
-                        <svg:text x="100" y="95" text-anchor="middle" class="donut-inner-title">
-                            @InnerTitle
-                        </svg:text>
-                    }
-
-                    <svg:text x="100" y="115" text-anchor="middle" class="donut-inner-text">
-                        @TotalValue.ToString("N0")
-                    </svg:text>
-                </g>
+                <svg:text x="100"
+                          y="105"
+                          text-anchor="middle"
+                          class="donut-inner-title">
+                    @InnerTitle
+                </svg:text>
             }
-        </g>
+        }
+
     </svg>
 
-    @if (!IsDonut && IsEmpty)
-    {
-        <div class="donut-no-records-overlay">No records found</div>
-    }
-
+    @* Tooltip *@
     @if (ShowTooltip)
     {
         <div class="donut-tooltip">
-            <div class="donut-tooltip-title">@TooltipLabel</div>
-            <div class="donut-tooltip-value">@TooltipValue</div>
+            <div class="tooltip-label">@TooltipLabel</div>
+            <div class="tooltip-value">@TooltipValue</div>
         </div>
     }
 
-    @if (ShowLegend && Slices.Any(s => s.Value > 0))
+    @* Legend *@
+    @if (ShowLegend && Slices.Count > 0)
     {
-        <div class="donut-legend">
-            @foreach (var slice in Slices.Where(s => s.Value > 0))
+        <ul class="donut-legend">
+            @foreach (var slice in Slices)
             {
-                <div class="donut-legend-item">
-                    <span class="donut-legend-color" style="background:@slice.Color"></span>
-                    <span class="donut-legend-label">@slice.Label</span>
-                    <span class="donut-legend-value">@slice.Value</span>
-                </div>
+                <li>
+                    <span class="legend-color" style="background:@slice.Color"></span>
+                    @slice.Label (@slice.Value)
+                </li>
             }
-        </div>
+        </ul>
     }
 
 </div>
