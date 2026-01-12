@@ -7,66 +7,53 @@ public partial class Home : ComponentBase, IDisposable
 	[Inject] private NavigationManager Nav { get; set; } = default!;
 
 	// -----------------------------
-	// Donut chart data
-	// -----------------------------
-	private Dictionary<string, int> SalesData = new()
-	{
-		["North"] = 120,
-		["South"] = 80,
-		["East"] = 140,
-		["West"] = 60
-	};
-
-	private List<string> AllSalesLabels => SalesData.Keys.ToList();
-	private IEnumerable<string>? CurrentSalesLabels;
-
-	// -----------------------------
 	// Pie chart data (now a dictionary)
 	// -----------------------------
-	private Dictionary<string, int> TaskData = new()
+	private Dictionary<string, int> pieData = new()
 	{
 		["Completed"] = 30,
-		["In Progress"] = 15,
-		["Blocked"] = 5
+		["In Progress"] = 25,      // 15 + 10
+		["Blocked"] = 5,
+		["Not Started"] = 12,
+		["On Hold"] = 4,
+		["Under Review"] = 17,     // 7 + 10
+		["Pending Approval"] = 3,
+		["Cancelled"] = 2,
+		["Deferred"] = 6
 	};
 
-	private List<string> AllTaskLabels => TaskData.Keys.ToList();
-	private IEnumerable<string>? CurrentTaskLabels;
+	private List<string> AllTaskLabels => pieData.Keys.Order().ToList();
+
+	private List<string> CurrentTaskLabels
+	{
+		get { return [.. currentTaskLabels!.Order()]; }
+		set => currentTaskLabels = value;
+	}
+
+	private List<string> SelectedTaskValues
+	{
+		get { return [.. currentTaskValues!.Order()]; }
+		set => currentTaskValues = value;
+	}
+
+	private void OnColorNamesChanged(List<string> names) =>
+			CurrentTaskLabels = names;
+
+	private void OnColorNameValuesChanged(List<string> names) =>
+			currentTaskValues = names;
 
 	// -----------------------------
 	// Timers
 	// -----------------------------
-	private System.Timers.Timer? _salesTimer;
 
-	private System.Timers.Timer? _taskTimer;
+	private System.Timers.Timer? _pieTimer;
 
 	private readonly Random _rand = new();
 
 	protected override void OnInitialized()
 	{
-		CurrentSalesLabels = AllSalesLabels;
 		CurrentTaskLabels = AllTaskLabels;
-
-		_salesTimer = new System.Timers.Timer(3000);
-		_salesTimer.Elapsed += (_, __) => UpdateSalesLabels();
-		_salesTimer.AutoReset = true;
-		_salesTimer.Enabled = true;
-
-		_taskTimer = new System.Timers.Timer(3000);
-		_taskTimer.Elapsed += (_, __) => UpdateTaskLabels();
-		_taskTimer.AutoReset = true;
-		_taskTimer.Enabled = true;
-	}
-
-	private void UpdateSalesLabels()
-	{
-		var count = _rand.Next(1, AllSalesLabels.Count + 1);
-		CurrentSalesLabels = AllSalesLabels
-			.OrderBy(_ => _rand.Next())
-			.Take(count)
-			.ToList();
-
-		InvokeAsync(StateHasChanged);
+		UpdateTaskLabels();
 	}
 
 	private void UpdateTaskLabels()
@@ -94,24 +81,23 @@ public partial class Home : ComponentBase, IDisposable
 
 	public void Dispose()
 	{
-		_salesTimer?.Dispose();
-		_taskTimer?.Dispose();
+		_pieTimer?.Dispose();
 	}
-
-	// Colours for Sales chart
-	private Dictionary<string, string> SalesColors = new()
-	{
-		["North"] = "#4CAF50",      // green
-		["South"] = "#2196F3",      // blue
-		["East"] = "#FFC107",       // amber
-		["West"] = "#F44336"        // red
-	};
 
 	// Colours for Task chart
 	private Dictionary<string, string> TaskColors = new()
 	{
-		["Completed"] = "#4CAF50",
-		["In Progress"] = "#FFC107",
-		["Blocked"] = "#F44336"
+		["Completed"] = "#4CAF50",        // Green
+		["In Progress"] = "#2196F3",      // Blue
+		["Blocked"] = "#F44336",          // Red
+		["Not Started"] = "#9E9E9E",      // Grey
+		["On Hold"] = "#FF9800",          // Orange
+		["Under Review"] = "#9C27B0",     // Purple
+		["Pending Approval"] = "#FFC107", // Amber
+		["Cancelled"] = "#000000",        // Black
+		["Deferred"] = "#795548"          // Brown
 	};
+
+	private List<string>? currentTaskLabels = [];
+	private List<string>? currentTaskValues = [];
 }

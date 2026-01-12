@@ -60,7 +60,7 @@
     @if (ShowLegend && Slices.Count > 0)
     {
         <ul class="donut-legend">
-            @foreach (var slice in Slices)
+            @foreach (var slice in Slices.OrderBy(m=>m.Label))
             {
                 <li>
                     <span class="legend-color" style="background:@slice.Color"></span>

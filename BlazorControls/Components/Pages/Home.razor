@@ -2,43 +2,42 @@
 @using BlazorControls.Components.Shared
 @rendermode InteractiveServer
 
-<h3>Donut Chart Demo</h3>
+<h3>Dashboard</h3>
 
 <div class="chart-wrapper">
+    <div class="home-checkboxlist">
+        <CheckBoxList Data="@AllTaskLabels"
+                      SelectedTexts="@CurrentTaskLabels"
+                      SelectedValues="@SelectedTaskValues"
+                      SelectedTextsChanged="OnColorNamesChanged"
+                      SelectedValuesChanged="OnColorNameValuesChanged"
+                      ExcludedTexts="@(new List<string> { "Completed","Blocked" })" />
 
+        @* SelectedValues="@SelectedColors" 
+                        SelectedValuesChanged="OnColorsChanged" 
+                       SelectedTextsChanged="OnColorNamesChanged" *@
+    </div>
+    
     <!-- Donut Chart -->
     <div class="chart-container">
-        <DonutChart Title="Sales by Region"
-                    InnerTitle="Total Sales"
+        <DonutChart Title="Tasks (Donut)"
+                    InnerTitle="@CurrentTaskLabels!.Count().ToString()"
                     IsDonut="true"
                     Thickness="40"
-                    Data="@SalesData"
-                    IncludeLabels="@CurrentSalesLabels"
-                    StatusColors="@SalesColors"
+                    Data="@pieData"
+                    IncludeLabels="@CurrentTaskLabels"
+                    StatusColors="@TaskColors"
                     OnSliceClick="HandleSliceClick"
                     OnCenterClick="HandleCenterClick"
-                    ShowLegend="true" />
-
-
-        <div class="filter-text">
-            <strong>Filtered Regions:</strong>
-            @if (CurrentSalesLabels is not null)
-            {
-                <span>@string.Join(", ", CurrentSalesLabels)</span>
-            }
-            else
-            {
-                <span>(none)</span>
-            }
-        </div>
+                    ShowLegend="true" />      
     </div>
 
     <!-- Pie Chart -->
     <div class="chart-container">
-        <DonutChart Title="Task Breakdown"
+        <DonutChart Title="Tasks (Piechart)"
                     InnerTitle="Tasks"
                     IsDonut="false"
-                    Data="@TaskData"
+                    Data="@pieData"
                     IncludeLabels="@CurrentTaskLabels"
                     StatusColors="@TaskColors"
                     OnSliceClick="HandleSliceClick"
@@ -49,7 +48,7 @@
             <strong>Filtered Tasks:</strong>
             @if (CurrentTaskLabels is not null)
             {
-                <span>@string.Join(", ", CurrentTaskLabels)</span>
+                <span>@string.Join(", ", CurrentTaskLabels.OrderBy(m=>m))</span>
             }
             else
             {

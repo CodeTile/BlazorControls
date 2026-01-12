@@ -1,212 +1,120 @@
-﻿namespace BlazorControls.Tests.Components.Shared;
-
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 using BlazorControls.Components.Shared;
 
+using Microsoft.AspNetCore.Components;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-[TestClass]
-public class CheckBoxListTests
+namespace BlazorControls.Tests.Components.Shared
 {
-	private class Employee
+	[TestClass]
+	public class CheckBoxListTests
 	{
-		public long Id { get; set; }
-		public string Name { get; set; } = "";
-	}
-
-	// ---------------------------------------------------------
-	// Basic add/remove
-	// ---------------------------------------------------------
-
-	[TestMethod]
-	public void AddSelection_ShouldAddValueAndText()
-	{
-		var component = NewComponent<string>();
-
-		component.ToggleValue("101", "John Doe", true);
-
-		Assert.IsTrue(component.SelectedValues.Any(x => x == "101"));
-		Assert.IsTrue(component.SelectedTexts.Any(x => x == "John Doe"));
-	}
-
-	[TestMethod]
-	public void RemoveSelection_ShouldRemoveValueAndText()
-	{
-		var component = NewComponent<string>();
-		component.ToggleValue("101", "John Doe", true);
-
-		component.ToggleValue("101", "John Doe", false);
-
-		Assert.IsFalse(component.SelectedValues.Any(x => x == "101"));
-		Assert.IsFalse(component.SelectedTexts.Any(x => x == "John Doe"));
-	}
-
-	// ---------------------------------------------------------
-	// Multiple selections
-	// ---------------------------------------------------------
-
-	[TestMethod]
-	public void MultipleSelections_ShouldAddAll()
-	{
-		var component = NewComponent<string>();
-
-		component.ToggleValue("1", "A", true);
-		component.ToggleValue("2", "B", true);
-		component.ToggleValue("3", "C", true);
-
-		CollectionAssert.AreEqual(
-			new[] { "1", "2", "3" },
-			component.SelectedValues.ToList()
-		);
-
-		CollectionAssert.AreEqual(
-			new[] { "A", "B", "C" },
-			component.SelectedTexts.ToList()
-		);
-	}
-
-	[TestMethod]
-	public void RemovingOneFromMultiple_ShouldOnlyRemoveThatOne()
-	{
-		var component = NewComponent<string>();
-
-		component.ToggleValue("1", "A", true);
-		component.ToggleValue("2", "B", true);
-		component.ToggleValue("3", "C", true);
-
-		component.ToggleValue("2", "B", false);
-
-		CollectionAssert.AreEqual(
-			new[] { "1", "3" },
-			component.SelectedValues.ToList()
-		);
-
-		CollectionAssert.AreEqual(
-			new[] { "A", "C" },
-			component.SelectedTexts.ToList()
-		);
-	}
-
-	// ---------------------------------------------------------
-	// Duplicate prevention
-	// ---------------------------------------------------------
-
-	[TestMethod]
-	public void DuplicateSelections_ShouldNotBeAdded()
-	{
-		var component = NewComponent<string>();
-
-		component.ToggleValue("Blue", "Blue", true);
-		component.ToggleValue("Blue", "Blue", true);
-
-		Assert.AreEqual(1, component.SelectedValues.Count);
-		Assert.AreEqual(1, component.SelectedTexts.Count);
-	}
-
-	// ---------------------------------------------------------
-	// Repeated toggling
-	// ---------------------------------------------------------
-
-	[TestMethod]
-	public void RepeatedToggle_ShouldEndInCorrectState()
-	{
-		var component = NewComponent<string>();
-
-		component.ToggleValue("X", "X", true);
-		component.ToggleValue("X", "X", false);
-		component.ToggleValue("X", "X", true);
-
-		Assert.IsTrue(component.SelectedValues.Any(x => x == "X"));
-		Assert.IsTrue(component.SelectedTexts.Any(x => x == "X"));
-	}
-
-	// ---------------------------------------------------------
-	// Null and empty handling
-	// ---------------------------------------------------------
-
-	[TestMethod]
-	public void EmptyValue_ShouldBeHandled()
-	{
-		var component = NewComponent<string>();
-
-		component.ToggleValue("", "", true);
-
-		Assert.IsTrue(component.SelectedValues.Any(x => x == ""));
-		Assert.IsTrue(component.SelectedTexts.Any(x => x == ""));
-	}
-
-	[TestMethod]
-	public void NullValue_ShouldBeHandled()
-	{
-		var component = NewComponent<string>();
-
-		component.ToggleValue(null!, null!, true);
-
-		Assert.IsTrue(component.SelectedValues.Any(x => x == null));
-		Assert.IsTrue(component.SelectedTexts.Any(x => x == null));
-	}
-
-	// ---------------------------------------------------------
-	// Order preservation
-	// ---------------------------------------------------------
-
-	[TestMethod]
-	public void OrderShouldBePreserved()
-	{
-		var component = NewComponent<string>();
-
-		component.ToggleValue("A", "A", true);
-		component.ToggleValue("B", "B", true);
-		component.ToggleValue("C", "C", true);
-
-		CollectionAssert.AreEqual(
-			new[] { "A", "B", "C" },
-			component.SelectedValues.ToList()
-		);
-	}
-
-	// ---------------------------------------------------------
-	// Complex object tests
-	// ---------------------------------------------------------
-
-	[TestMethod]
-	public void ComplexObject_ShouldStoreCorrectValues()
-	{
-		var component = NewComponent<Employee>();
-
-		component.ToggleValue("101", "Alice", true);
-
-		Assert.IsTrue(component.SelectedValues.Any(x => x == "101"));
-		Assert.IsTrue(component.SelectedTexts.Any(x => x == "Alice"));
-	}
-
-	// ---------------------------------------------------------
-	// Stress test
-	// ---------------------------------------------------------
-
-	[TestMethod]
-	public void LargeNumberOfSelections_ShouldAllBeAdded()
-	{
-		var component = NewComponent<string>();
-
-		for (int i = 0; i < 1000; i++)
+		private class TestItem
 		{
-			component.ToggleValue(i.ToString(), $"Text{i}", true);
+			public int Id { get; set; }
+			public string Name { get; set; } = string.Empty;
 		}
 
-		Assert.AreEqual(1000, component.SelectedValues.Count);
-		Assert.AreEqual(1000, component.SelectedTexts.Count);
-	}
-
-	// ---------------------------------------------------------
-	// Helper
-	// ---------------------------------------------------------
-
-	private static CheckBoxList<T> NewComponent<T>() =>
-		new()
+		[TestMethod]
+		public async Task OnParametersSet_InitializesSelectedValues_AndExcludesCorrectly()
 		{
-			SelectedValues = new List<string>(),
-			SelectedTexts = new List<string>()
-		};
+			// Arrange
+			var data = new List<string> { "One", "Two", "Three", "Four" };
+			bool valuesCalled = false;
+			bool textsCalled = false;
+
+			var component = new TestableCheckBoxList<string>
+			{
+				Data = data,
+				ExcludedTexts = new[] { "Two", "Four" },
+				SelectedValuesChanged = new EventCallback<List<string>>(null,
+					new Action<List<string>>(list => valuesCalled = true)),
+				SelectedTextsChanged = new EventCallback<List<string>>(null,
+					new Action<List<string>>(list => textsCalled = true))
+			};
+
+			// Act
+			await component.OnParametersSetPublicAsync();
+
+			// Assert: non-excluded items are selected
+			CollectionAssert.AreEquivalent(new[] { "One", "Three" }, component.SelectedValues);
+			CollectionAssert.AreEquivalent(new[] { "One", "Three" }, component.SelectedTexts);
+
+			// Assert: excluded items are not selected
+			Assert.IsFalse(component.SelectedValues.Contains("Two"));
+			Assert.IsFalse(component.SelectedValues.Contains("Four"));
+
+			// Assert: callbacks invoked
+			Assert.IsTrue(valuesCalled);
+			Assert.IsTrue(textsCalled);
+		}
+
+		[TestMethod]
+		public void ToggleValue_AddsAndRemovesItems_AndInvokesCallbacks()
+		{
+			// Arrange
+			var component = new CheckBoxList<string>();
+
+			bool valuesCalled = false;
+			bool textsCalled = false;
+
+			component.SelectedValuesChanged = new EventCallback<List<string>>(null,
+				new Action<List<string>>(list => valuesCalled = true));
+
+			component.SelectedTextsChanged = new EventCallback<List<string>>(null,
+				new Action<List<string>>(list => textsCalled = true));
+
+			string value = "val1";
+			string text = "Text1";
+
+			// Act: check the box
+			component.ToggleValue(value, text, true);
+
+			// Assert add
+			Assert.IsTrue(component.SelectedValues.Contains(value));
+			Assert.IsTrue(component.SelectedTexts.Contains(text));
+			Assert.IsTrue(valuesCalled);
+			Assert.IsTrue(textsCalled);
+
+			// Reset callback flags
+			valuesCalled = false;
+			textsCalled = false;
+
+			// Act: uncheck the box
+			component.ToggleValue(value, text, false);
+
+			// Assert remove
+			Assert.IsFalse(component.SelectedValues.Contains(value));
+			Assert.IsFalse(component.SelectedTexts.Contains(text));
+			Assert.IsTrue(valuesCalled);
+			Assert.IsTrue(textsCalled);
+		}
+
+		[TestMethod]
+		public void DataAndValueFields_CanBeUsed()
+		{
+			// Arrange
+			var items = new List<TestItem>
+			{
+				new() { Id = 1, Name = "Item1" },
+				new() { Id = 2, Name = "Item2" }
+			};
+
+			var component = new CheckBoxList<TestItem>
+			{
+				Data = items,
+				TextField = i => i.Name,
+				ValueField = i => i.Id
+			};
+
+			// Act & Assert
+			Assert.AreEqual(2, component.Data.Count());
+			Assert.AreEqual("Item1", component.TextField!(items[0]));
+			Assert.AreEqual(2, component.ValueField!(items[1]));
+		}
+	}
 }

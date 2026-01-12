@@ -4,62 +4,131 @@
 @using BlazorControls.Data.Models
 @rendermode InteractiveServer
 
-
 <h2>Reusable CheckBoxList Demo</h2>
 <br />
 
-    <!-- Scenario 1: Complex Objects (Employee) -->
-    <h3>1. Employees (Object List)</h3>
+<!-- Scenario 1: Complex Objects (Employee) -->
+<h3>1. Employees (Object List)</h3>
 
-    <CheckBoxList Data="@EmployeeList"
-                  TextField="@(e => e.FullName)"
-                  ValueField="@(e => e.EmployeeId)"
-                  SelectedValues="@SelectedEmployeeIds"
-                  SelectedValuesChanged="OnEmployeeIdsChanged"
-                  SelectedTexts="@SelectedEmployeeNames"
-                  SelectedTextsChanged="OnEmployeeNamesChanged" />
+<CheckBoxList Data="@EmployeeList"
+              TextField="@(e => e.FullName)"
+              ValueField="@(e => e.EmployeeId.ToString())"
+              SelectedValues="@SelectedEmployeeIds"
+              SelectedValuesChanged="OnEmployeeIdsChanged"
+              SelectedTexts="@SelectedEmployeeNames"
+              SelectedTextsChanged="OnEmployeeNamesChanged" />
 
-    <div class="output-row">
-        <label>Selected Employee IDs:</label>
-        @EmployeeIdsOutput
-    </div>
+<div class="output-row">
+    <label>Selected Employee IDs:</label>
+    @EmployeeIdsOutput
+</div>
 
-    <div class="output-row">
-        <label>Selected Employee Names:</label>
-        @EmployeeNamesOutput
-    </div>
+<div class="output-row">
+    <label>Selected Employee Names:</label>
+    @EmployeeNamesOutput
+</div>
 
 <br />
 
-    <!-- Scenario 2: Simple Strings -->
-    <h3>2. Colors (List of Strings)</h3>
+<!-- Scenario 2: Simple Strings -->
+<h3>2. Colors (List of Strings)</h3>
 
-    <CheckBoxList Data="@ColorList"
-                  SelectedValues="@SelectedColors"
-                  SelectedValuesChanged="OnColorsChanged"
-                  SelectedTexts="@SelectedColorNames"
-                  SelectedTextsChanged="OnColorNamesChanged" />
+<CheckBoxList Data="@ColorList"
+              SelectedValues="@SelectedColors"
+              SelectedValuesChanged="OnColorsChanged"
+              SelectedTexts="@SelectedColorNames"
+              SelectedTextsChanged="OnColorNamesChanged" 
+              ExcludedTexts="@(new string[]{"Blue"})"/>
 
-    <div class="output-row">
-        <label>Selected Colors:</label>
-        @ColorOutput
-    </div>
+<div class="output-row">
+    <label>Selected Colors:</label>
+    @ColorOutput
+</div>
 
-    <br/>
+<br />
 
-    <!-- Scenario 3: Objects with No Value Field -->
-    <h3>3. Departments (Object List, Text Only)</h3>
+<!-- Scenario 3: Objects with No Value Field -->
+<h3>3. Departments (Object List, Text Only)</h3>
 
-    <CheckBoxList Data="@DepartmentList"
-                  TextField="@(d => d)"
-                  ValueField="@(d => d)"
-                  SelectedValues="@SelectedDepartments"
-                  SelectedValuesChanged="OnDepartmentsChanged"
-                  SelectedTexts="@SelectedDepartmentNames"
-                  SelectedTextsChanged="OnDepartmentNamesChanged" />
+<CheckBoxList Data="@DepartmentList"
+              TextField="@(d => d)"
+              ValueField="@(d => d)"
+              SelectedValues="@SelectedDepartments"
+              SelectedValuesChanged="OnDepartmentsChanged"
+              SelectedTexts="@SelectedDepartmentNames"
+              SelectedTextsChanged="OnDepartmentNamesChanged" />
 
-    <div class="output-row">
-        <label>Selected Departments:</label>
-        @DepartmentOutput
-    </div>
+<div class="output-row">
+    <label>Selected Departments:</label>
+    @DepartmentOutput
+</div>
+@code {
+    // -----------------------------
+    // Scenario 1: Employees
+    // -----------------------------
+    private List<Employee> EmployeeList = new()
+    {
+        new Employee { EmployeeId = 1, FirstName = "Alice", LastName = "Smith", MobileNo = "123", Email = "alice@example.com" },
+        new Employee { EmployeeId = 2, FirstName = "Bob", LastName = "Johnson", MobileNo = "456", Email = "bob@example.com" },
+        new Employee { EmployeeId = 3, FirstName = "Charlie", LastName = "Brown", MobileNo = "789", Email = "charlie@example.com" }
+    };
 
+
+    private List<string> SelectedEmployeeIds { get; set; } = new();
+    private List<string> SelectedEmployeeNames { get; set; } = new();
+
+    private string EmployeeIdsOutput => string.Join(", ", SelectedEmployeeIds);
+    private string EmployeeNamesOutput => string.Join(", ", SelectedEmployeeNames);
+
+    private Task OnEmployeeIdsChanged(List<string> ids)
+    {
+        SelectedEmployeeIds = ids;
+        return Task.CompletedTask;
+    }
+
+    private Task OnEmployeeNamesChanged(List<string> names)
+    {
+        SelectedEmployeeNames = names;
+        return Task.CompletedTask;
+    }
+
+    // -----------------------------
+    // Scenario 2: Colors
+    // -----------------------------
+    private List<string> ColorList = new() { "Red", "Green", "Blue", "Yellow" };
+    private List<string> SelectedColors { get; set; } = new();
+    private List<string> SelectedColorNames { get; set; } = new();
+    private string ColorOutput => string.Join(", ", SelectedColorNames);
+
+    private Task OnColorsChanged(List<string> values)
+    {
+        SelectedColors = values;
+        return Task.CompletedTask;
+    }
+
+    private Task OnColorNamesChanged(List<string> names)
+    {
+        SelectedColorNames = names;
+        return Task.CompletedTask;
+    }
+
+    // -----------------------------
+    // Scenario 3: Departments
+    // -----------------------------
+    private List<string> DepartmentList = new() { "HR", "Finance", "IT", "Sales" };
+    private List<string> SelectedDepartments { get; set; } = new();
+    private List<string> SelectedDepartmentNames { get; set; } = new();
+    private string DepartmentOutput => string.Join(", ", SelectedDepartmentNames);
+
+    private Task OnDepartmentsChanged(List<string> values)
+    {
+        SelectedDepartments = values;
+        return Task.CompletedTask;
+    }
+
+    private Task OnDepartmentNamesChanged(List<string> names)
+    {
+        SelectedDepartmentNames = names;
+        return Task.CompletedTask;
+    }
+}
