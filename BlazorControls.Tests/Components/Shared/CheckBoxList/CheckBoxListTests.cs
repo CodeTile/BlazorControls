@@ -8,7 +8,7 @@ using BlazorControls.Components.Shared;
 using Microsoft.AspNetCore.Components;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace BlazorControls.Tests.Components.Shared
+namespace BlazorControls.Tests.Components.Shared.CheckBoxList
 {
 	[TestClass]
 	public class CheckBoxListTests

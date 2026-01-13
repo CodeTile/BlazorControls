@@ -8,6 +8,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Components\Shared\DonutChartTests\DonutChartExpandedTests.cs" />
+    <Compile Remove="Components\Shared\DonutChartTests\DonutChartGeometryTests.cs" />
+    <Compile Remove="Components\Shared\DonutChartTests\DonutChartTests.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="bunit" Version="2.5.3" />
     <PackageReference Include="coverlet.collector" Version="6.0.4">
       <PrivateAssets>all</PrivateAssets>

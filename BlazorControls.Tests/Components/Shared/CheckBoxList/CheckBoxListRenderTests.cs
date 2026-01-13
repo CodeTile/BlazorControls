@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using BlazorControls.Components.Shared;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace BlazorControls.Tests.Components.Shared
+namespace BlazorControls.Tests.Components.Shared.CheckBoxList
 {
 	[TestClass]
 	public class CheckBoxListRenderTests
