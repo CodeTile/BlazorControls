@@ -1,151 +1,193 @@
-﻿# 🍩 DonutChart Component for Blazor  
-A clean, lightweight, SVG‑driven Pie/Donut chart component for Blazor applications.
-Designed for clarity, testability, and ease of integration — with built‑in legends, tooltips, filtering, and click interactions.
+﻿# 🍩 DonutChart Component
+A reusable, SVG‑based donut / pie chart component for Blazor.
+Supports custom colours, legends, tooltips, filtering, and click events.
+
+---
 
 ## ✨ Features
-* Pie or Donut display modes
-* Automatic slice generation from key/value data
-* Zero‑value filtering (ignored automatically)
-* Optional legend with color‑matched items
-* Hover tooltips for label/value display
-* Slice click and center click events
-* Deterministic HSL color generation per label
 
-Responsive SVG layout
+- Render as donut or pie
+- Fully SVG‑based (no JS dependencies)
+- Smooth hover animations
+- Optional inner title
+- Automatic colour assignment
+- Custom colour palettes
+- Per‑label colour overrides
+- Slice click events
+- Donut‑center click events
+- Tooltip on hover
+- Optional legend
+- Label filtering
+- Stable fallback colours (HSL)
 
-Fully unit‑tested with bUnit + MSTest
+---
 
-📦 Installation  
+## 📦 Installation
 
-Add the component files to your project:
-```
-/Components/Shared/DonutChart.razor
-/Components/Shared/DonutChart.razor.cs
-/Components/Shared/DonutSlice.cs
-```
-Then include the namespace in your _Imports.razor:
-```
-@using BlazorControls.Components.Shared
-```
-🚀 Basic Usage  
-```razor``` 
-```<DonutChart
-    Data="new Dictionary<string, int>
-    {
-        ["North"] = 100,
-        ["South"] = 50,
-        ["East"] = 25
-    }"
-    IncludeLabels="new[] { "North", "South", "East" }"
-/> 
-``` 
+Add the component to your Blazor project:
 
-🍩 Donut Mode
-``` 
-<DonutChart
-    Data="Sales"
-    IncludeLabels="Sales.Keys"
-    IsDonut="true"
-    Thickness="40"
-/>
-``` 
-Thickness controls the donut hole size
+    @using BlazorControls.Components.Shared
 
-InnerRadius = 100 - Thickness  
+Include the stylesheet:
 
-📊 Pie Mode
-``` 
-<DonutChart
-    Data="Sales"
-    IncludeLabels="Sales.Keys"
-    IsDonut="false"
-/>
-```
-Pie mode has no center circle and no center click event.
+    <link href="css/donut-chart.css" rel="stylesheet" />
 
-🏷️ Legend
-Enable the legend:  
-```
-<DonutChart
-    Data="Sales"
-    IncludeLabels="Sales.Keys"
+---
+
+## 🚀 Basic Usage
+
+### Donut Chart (default)
+
+    <DonutChart
+        Title="Sales Breakdown"
+        Data="new() { { "Books", 40 }, { "Games", 25 }, { "Music", 35 } }"
+        ShowLegend="true" />
+
+### Pie Chart
+
+    <DonutChart
+        IsDonut="false"
+        Title="Market Share"
+        Data="new() { { "A", 50 }, { "B", 30 }, { "C", 20 } }" />
+
+---
+
+## 🧩 Parameters
+
+Parameter | Type | Description
+--------- | ---- | -----------
+Title | string? | Optional title displayed above the chart
+InnerTitle | string? | Text shown inside donut center (donut mode only)
+IsDonut | bool | Donut (true) or pie (false). Default: true
+Thickness | int | Donut ring thickness
+Data | Dictionary<string,int>? | Required data source
+IncludeLabels | IEnumerable<string>? | Optional whitelist of labels
+StatusColors | Dictionary<string,string>? | Per‑label colour overrides
+DefaultColors | List<string>? | Palette used when no explicit colour exists
+ShowLegend | bool | Whether to show the legend
+OnSliceClick | EventCallback<string> | Fired when a slice is clicked
+OnCenterClick | EventCallback | Fired when donut center is clicked
+
+---
+
+## 🎨 Colour Rules
+
+Colours are resolved in this order:
+
+1. StatusColors[label]
+2. DefaultColors[index] (cycled)
+3. Generated HSL fallback (stable per label)
+
+Example:
+
+    <DonutChart
+        Data="data"
+        StatusColors="new() { { "Critical", "#FF0000" } }"
+        DefaultColors="new() { "#4CAF50", "#2196F3" }" />
+
+---
+
+## 🧠 Behaviour
+
+### Slice Generation
+
+- Zero or negative values are ignored
+- Labels not in IncludeLabels are skipped
+- Total value < 1 → no slices
+- Sweep angle = (value / total) * 360
+
+### Donut Center
+
+Rendered only when:
+
+    IsDonut == true
+
+Inner radius:
+
+    InnerRadius = max(0, 90 - Thickness)
+
+---
+
+## 🖱️ Events
+
+### Slice Click
+
+    <DonutChart
+        Data="data"
+        OnSliceClick="HandleSliceClick" />
+
+    @code {
+        void HandleSliceClick(string label)
+        {
+            Console.WriteLine($"Clicked slice: {label}");
+        }
+    }
+
+### Donut Center Click
+
+    <DonutChart
+        IsDonut="true"
+        OnCenterClick="HandleCenterClick" />
+
+    @code {
+        void HandleCenterClick()
+        {
+            Console.WriteLine("Center clicked");
+        }
+    }
+
+---
+
+## 🧰 Tooltip Behaviour
+
+- Appears on slice hover
+- Shows label + formatted value
+- In donut mode, hovering the center shows:
+  - InnerTitle
+  - TotalValue
+
+---
+
+## 📊 Legend
+
+Enable via:
+
     ShowLegend="true"
-/>
-```
-Legend items:
 
-* Match slice colors  
-* Only show non‑zero values  
-* Respect Include Labels  
+Sorted alphabetically by label.
 
-🖱️ Events  
-Slice Click
-``` <DonutChart
-    Data="Sales"
-    IncludeLabels="Sales.Keys"
-    OnSliceClick="label => Console.WriteLine($"Clicked {label}")"
-/>
-```
-Slice Click  
-```
-<DonutChart
-    Data="Sales"
-    IncludeLabels="Sales.Keys"
-    IsDonut="true"
-    OnCenterClick="@(() => Console.WriteLine("Center clicked"))"
-/>
-```
-🎨 Styling  
+---
 
-CSS classes used by the component:  
+## 🎨 Styling
 
-| Element            | Class             |  
-|--------------------|-------------------| 
-|Slice path	         |donut-slice        |
-|Tooltip	         |donut-tooltip      |
-|Legend container	 |donut-legend       |
-|Legend item	     |donut-legend-item  |
-|Donut center group	 |donut-center       |
-|Donut center circle |donut-center-circle|
+All styles are included in donut-chart.css:
 
-Override them in your site stylesheet as needed.
+- Hover animations
+- Tooltip positioning
+- Legend layout
+- Slice scaling
+- Inner title styling
 
-🧮 Data Rules
-* Zero‑value entries are ignored
-* ```IncludeLabels``` filters the dataset
-* Colors are generated deterministically from label text
-* Slice angles always sum to 360°
+Override any class:
 
-🧪 Unit Tests  
-A full MSTest + bUnit suite is included:
+    .donut-slice:hover {
+        transform: scale(1.1);
+    }
 
-* Slice math
-* Geometry
-* Legend behavior
-* Tooltip behavior
-* Donut vs Pie
-* Click events
-* Zero‑value filtering
-* IncludeLabels filtering
+---
 
-Tests live in:
-``` 
-BlazorControls.Tests/Components/Shared/
-```
-🛠️ Parameters
-|Parameter	   |Type	                 |Description                          |
-|--------------|-------------------------|-------------------------------------|
-|Data	       | IDictionary<string,int> | *Required*. Source values.          | 
-|IncludeLabels | IEnumerable	         | Filters which labels appear.        |
-|IsDonut	   | bool	                 | Enables donut mode.                 |
-|Thickness	   | int	                 | Donut hole size.                    |
-|ShowLegend	   | bool	                 | Shows legend below chart.           |
-|OnSliceClick  | Action                  | Fired when a slice is clicked.      |
-|OnCenterClick | Action	                 | Fired when donut center is clicked. |
+## 🧪 Testing
 
-📐 SVG Layout
-``` 
-    viewBox="0 0 200 220"
-```
-📄 License  
-MIT License
+The component is fully testable using bUnit:
+
+    var cut = Render<DonutChart>(p => p
+        .Add(x => x.Data, new() { { "A", 10 } })
+    );
+
+    Assert.AreEqual(1, cut.Instance.Slices.Count);
+
+---
+
+## 📄 License
+
+MIT — free to use, modify, and integrate.
