@@ -54,11 +54,35 @@ public class DonutSlice
 	/// </summary>
 	private static string BuildPath(double startAngle, double sweepAngle, double outerR, double innerR)
 	{
-		double start = startAngle * Math.PI / 180;
-		double end = (startAngle + sweepAngle) * Math.PI / 180;
-
 		double cx = 100;
 		double cy = 100;
+
+		// Detect full circle (or extremely close)
+		if (Math.Abs(sweepAngle - 360) < 0.01)
+		{
+			// Outer circle (two 180° arcs)
+			string outer =
+				$"M {cx} {cy - outerR} " +
+				$"A {outerR} {outerR} 0 1 1 {cx} {cy + outerR} " +
+				$"A {outerR} {outerR} 0 1 1 {cx} {cy - outerR} ";
+
+			if (innerR <= 0)
+			{
+				// Full pie
+				return outer + "Z";
+			}
+
+			// Donut: inner circle (reverse direction)
+			string inner =
+				$"M {cx} {cy - innerR} " +
+				$"A {innerR} {innerR} 0 1 0 {cx} {cy + innerR} " +
+				$"A {innerR} {innerR} 0 1 0 {cx} {cy - innerR} Z";
+
+			return outer + inner;
+		}
+
+		double start = startAngle * Math.PI / 180;
+		double end = (startAngle + sweepAngle) * Math.PI / 180;
 
 		double x1 = cx + outerR * Math.Cos(start);
 		double y1 = cy + outerR * Math.Sin(start);

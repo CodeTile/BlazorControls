@@ -79,7 +79,7 @@ public partial class DonutChart : ComponentBase
 	/// <summary>
 	/// The total value of all rendered slices.
 	/// </summary>
-	protected int TotalValue => Slices.Sum(s => s.Value);
+	internal int TotalValue => Slices.Sum(s => s.Value);
 
 	/// <summary>
 	/// The inner radius of the donut.
@@ -113,7 +113,7 @@ public partial class DonutChart : ComponentBase
 	/// Builds the list of slices based on the provided data,
 	/// filtering rules, and colour configuration.
 	/// </summary>
-	private void BuildSlices()
+	internal void BuildSlices()
 	{
 		Slices.Clear();
 

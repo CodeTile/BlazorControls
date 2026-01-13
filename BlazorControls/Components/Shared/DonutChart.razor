@@ -33,16 +33,16 @@
                         r="@InnerRadius"
                         fill="white" />
             </g>
-
             @if (!string.IsNullOrWhiteSpace(InnerTitle))
             {
                 <svg:text x="100"
-                          y="105"
-                          text-anchor="middle"
-                          class="donut-inner-title">
+                       y="105"
+                       text-anchor="middle"
+                       class="donut-inner-title">
                     @InnerTitle
                 </svg:text>
             }
+
         }
 
     </svg>
