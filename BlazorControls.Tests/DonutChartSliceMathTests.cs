@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-using BlazorControls.Components.Shared;
+using BlazorControls.Components;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace BlazorControls.Tests.Components.Shared.DonutChartTests
+namespace BlazorControls.Components.Tests
 {
 	/// <summary>
 	/// Tests validating mathematical correctness of sweep angles,

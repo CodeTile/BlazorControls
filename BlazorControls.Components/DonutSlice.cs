@@ -1,4 +1,6 @@
-﻿namespace BlazorControls.Components.Shared;
+﻿using System;
+
+namespace BlazorControls.Components;
 
 /// <summary>
 /// Represents a single slice of a donut or pie chart,

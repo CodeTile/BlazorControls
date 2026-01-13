@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RazorLangVersion>8.0</RazorLangVersion>
+    <GenerateRazorComponentClass>true</GenerateRazorComponentClass>
+    <EnableDefaultCssItems>true</EnableDefaultCssItems>
+    <IncludeRazorCssInProject>true</IncludeRazorCssInProject>
+  </PropertyGroup>
+
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.1" />
+  </ItemGroup>
+
+</Project>

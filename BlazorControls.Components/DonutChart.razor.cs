@@ -1,6 +1,11 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace BlazorControls.Components.Shared;
+using Microsoft.AspNetCore.Components;
+
+namespace BlazorControls.Components;
 
 /// <summary>
 /// A reusable SVG-based donut or pie chart component supporting
@@ -74,19 +79,19 @@ public partial class DonutChart : ComponentBase
 	/// <summary>
 	/// The list of computed slices used for rendering.
 	/// </summary>
-	internal List<DonutSlice> Slices { get; private set; } = [];
+	public List<DonutSlice> Slices { get; private set; } = [];
 
 	/// <summary>
 	/// The total value of all rendered slices.
 	/// </summary>
-	internal int TotalValue => Slices.Sum(s => s.Value);
+	public int TotalValue => Slices.Sum(s => s.Value);
 
 	/// <summary>
 	/// The inner radius of the donut.
 	/// Donut mode: 90 - Thickness
 	/// Pie mode: 0
 	/// </summary>
-	internal int InnerRadius => IsDonut ? Math.Max(0, 90 - Thickness) : 0;
+	public int InnerRadius => IsDonut ? Math.Max(0, 90 - Thickness) : 0;
 
 	/// <summary>
 	/// Whether the tooltip is currently visible.
@@ -113,7 +118,7 @@ public partial class DonutChart : ComponentBase
 	/// Builds the list of slices based on the provided data,
 	/// filtering rules, and colour configuration.
 	/// </summary>
-	internal void BuildSlices()
+	public void BuildSlices()
 	{
 		Slices.Clear();
 
@@ -134,7 +139,7 @@ public partial class DonutChart : ComponentBase
 
 		foreach (var item in source)
 		{
-			double sweep = (item.Value / (double)total) * 360.0;
+			double sweep = item.Value / (double)total * 360.0;
 			string color = ResolveColor(item.Key, ref colorIndex);
 
 			var slice = new DonutSlice(

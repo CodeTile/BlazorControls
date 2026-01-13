@@ -1,6 +1,6 @@
-﻿using BlazorControls.Components.Shared;
+﻿using BlazorControls.Components;
 
-namespace BlazorControls.Tests.Components.Shared.CheckBoxList
+namespace BlazorControls.Components.Tests
 {
 	// Subclass to expose protected OnParametersSetAsync for testing
 	public class TestableCheckBoxList<TItem> : CheckBoxList<TItem>

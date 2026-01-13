@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-using BlazorControls.Components.Shared;
+using BlazorControls.Components;
+using BlazorControls.Components.Tests;
 
 using Microsoft.AspNetCore.Components;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace BlazorControls.Tests.Components.Shared.CheckBoxList
+namespace BlazorControls.Components.Tests
 {
 	[TestClass]
 	public class CheckBoxListTests

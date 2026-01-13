@@ -6,7 +6,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
-    <InternalsVisibleTo Include="BlazorControls.Tests" />
+    <InternalsVisibleTo Include="BlazorControls.Components.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BlazorControls.Components\BlazorControls.Components.csproj" />
   </ItemGroup>
 
 </Project>

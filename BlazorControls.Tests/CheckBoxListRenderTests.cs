@@ -1,10 +1,11 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using BlazorControls.Components.Shared;
+using BlazorControls.Components;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using BlazorControls.Components.Tests;
 
-namespace BlazorControls.Tests.Components.Shared.CheckBoxList
+namespace BlazorControls.Components.Tests
 {
 	[TestClass]
 	public class CheckBoxListRenderTests

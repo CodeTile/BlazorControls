@@ -1,7 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using BlazorControls.Components.Shared;
+using BlazorControls.Components;
 
-namespace BlazorControls.Tests.Components.Shared.DonutChartTests
+namespace BlazorControls.Components.Tests
 {
 	/// <summary>
 	/// Tests validating the SVG path geometry produced by DonutSlice,

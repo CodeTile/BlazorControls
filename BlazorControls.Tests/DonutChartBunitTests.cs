@@ -2,9 +2,9 @@
 using Bunit;
 using Microsoft.AspNetCore.Components;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using BlazorControls.Components.Shared;
+using BlazorControls.Components;
 
-namespace BlazorControls.Tests.Components.Shared.DonutChartTests
+namespace BlazorControls.Components.Tests
 {
 	/// <summary>
 	/// Tests validating rendering, DOM structure, interactivity,

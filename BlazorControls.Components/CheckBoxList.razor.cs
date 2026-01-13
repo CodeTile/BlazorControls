@@ -1,6 +1,11 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
 using Microsoft.AspNetCore.Components;
 
-namespace BlazorControls.Components.Shared
+namespace BlazorControls.Components
 {
 	/// <summary>
 	/// A reusable checklist component that supports both complex objects and simple string lists.
@@ -14,7 +19,7 @@ namespace BlazorControls.Components.Shared
 		/// Can be complex objects or simple strings.
 		/// </summary>
 		[Parameter]
-		public IEnumerable<TItem> Data { get; set; } = Enumerable.Empty<TItem>();
+		public IEnumerable<TItem> Data { get; set; } = [];
 
 		/// <summary>
 		/// Gets or sets a function to extract the display text from each item.
