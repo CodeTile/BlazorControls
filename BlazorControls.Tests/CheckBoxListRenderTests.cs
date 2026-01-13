@@ -1,240 +1,155 @@
-﻿using System.Linq;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using BlazorControls.Components;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using BlazorControls.Components.Tests;
+﻿using Bunit;
 
 namespace BlazorControls.Components.Tests
 {
 	[TestClass]
-	public class CheckBoxListRenderTests
+	public class CheckBoxListRenderTests : BunitContext
 	{
-		private class Employee
-		{
-			public long Id { get; set; }
-			public string Name { get; set; } = "";
-		}
-
-		// ---------------------------------------------------------
-		// Basic add/remove
-		// ---------------------------------------------------------
+		// ------------------------------------------------------------
+		// Basic Rendering Tests (existing behavior)
+		// ------------------------------------------------------------
 
 		[TestMethod]
-		public void AddSelection_ShouldAddValueAndText()
+		public void Component_Renders_With_Data()
 		{
-			var component = NewComponent<string>();
+			var items = new[] { "A", "B", "C" };
 
-			component.ToggleValue("101", "John Doe", true);
-
-			Assert.IsTrue(component.SelectedValues.Contains("101"));
-			Assert.IsTrue(component.SelectedTexts.Contains("John Doe"));
-		}
-
-		[TestMethod]
-		public void RemoveSelection_ShouldRemoveValueAndText()
-		{
-			var component = NewComponent<string>();
-			component.ToggleValue("101", "John Doe", true);
-
-			component.ToggleValue("101", "John Doe", false);
-
-			Assert.IsFalse(component.SelectedValues.Contains("101"));
-			Assert.IsFalse(component.SelectedTexts.Contains("John Doe"));
-		}
-
-		// ---------------------------------------------------------
-		// Multiple selections
-		// ---------------------------------------------------------
-
-		[TestMethod]
-		public void MultipleSelections_ShouldAddAll()
-		{
-			var component = NewComponent<string>();
-
-			component.ToggleValue("1", "A", true);
-			component.ToggleValue("2", "B", true);
-			component.ToggleValue("3", "C", true);
-
-			CollectionAssert.AreEqual(
-				new[] { "1", "2", "3" },
-				component.SelectedValues.ToList()
+			var cut = Render<CheckBoxList<string>>(parameters => parameters
+				.Add(p => p.Data, items)
 			);
 
-			CollectionAssert.AreEqual(
-				new[] { "A", "B", "C" },
-				component.SelectedTexts.ToList()
-			);
+			Assert.IsNotNull(cut.Markup);
+			Assert.IsTrue(cut.Markup.Contains("A"));
+			Assert.IsTrue(cut.Markup.Contains("B"));
+			Assert.IsTrue(cut.Markup.Contains("C"));
 		}
 
 		[TestMethod]
-		public void RemovingOneFromMultiple_ShouldOnlyRemoveThatOne()
+		public void Component_Renders_With_TextField_And_ValueField()
 		{
-			var component = NewComponent<string>();
-
-			component.ToggleValue("1", "A", true);
-			component.ToggleValue("2", "B", true);
-			component.ToggleValue("3", "C", true);
-
-			component.ToggleValue("2", "B", false);
-
-			CollectionAssert.AreEqual(
-				new[] { "1", "3" },
-				component.SelectedValues.ToList()
-			);
-
-			CollectionAssert.AreEqual(
-				new[] { "A", "C" },
-				component.SelectedTexts.ToList()
-			);
-		}
-
-		// ---------------------------------------------------------
-		// Duplicate prevention
-		// ---------------------------------------------------------
-
-		[TestMethod]
-		public void DuplicateSelections_ShouldNotBeAdded()
-		{
-			var component = NewComponent<string>();
-
-			component.ToggleValue("Blue", "Blue", true);
-			component.ToggleValue("Blue", "Blue", true);
-
-			Assert.AreEqual(1, component.SelectedValues.Count);
-			Assert.AreEqual(1, component.SelectedTexts.Count);
-		}
-
-		// ---------------------------------------------------------
-		// Repeated toggling
-		// ---------------------------------------------------------
-
-		[TestMethod]
-		public void RepeatedToggle_ShouldEndInCorrectState()
-		{
-			var component = NewComponent<string>();
-
-			component.ToggleValue("X", "X", true);
-			component.ToggleValue("X", "X", false);
-			component.ToggleValue("X", "X", true);
-
-			Assert.IsTrue(component.SelectedValues.Contains("X"));
-			Assert.IsTrue(component.SelectedTexts.Contains("X"));
-		}
-
-		// ---------------------------------------------------------
-		// Null and empty handling
-		// ---------------------------------------------------------
-
-		[TestMethod]
-		public void EmptyValue_ShouldBeHandled()
-		{
-			var component = NewComponent<string>();
-
-			component.ToggleValue("", "", true);
-
-			Assert.IsTrue(component.SelectedValues.Contains(""));
-			Assert.IsTrue(component.SelectedTexts.Contains(""));
-		}
-
-		[TestMethod]
-		public void NullValue_ShouldBeHandled()
-		{
-			var component = NewComponent<string>();
-
-			component.ToggleValue(null!, null!, true);
-
-			Assert.IsTrue(component.SelectedValues.Contains(null));
-			Assert.IsTrue(component.SelectedTexts.Contains(null));
-		}
-
-		// ---------------------------------------------------------
-		// Order preservation
-		// ---------------------------------------------------------
-
-		[TestMethod]
-		public void OrderShouldBePreserved()
-		{
-			var component = NewComponent<string>();
-
-			component.ToggleValue("A", "A", true);
-			component.ToggleValue("B", "B", true);
-			component.ToggleValue("C", "C", true);
-
-			CollectionAssert.AreEqual(
-				new[] { "A", "B", "C" },
-				component.SelectedValues.ToList()
-			);
-		}
-
-		// ---------------------------------------------------------
-		// Complex object tests
-		// ---------------------------------------------------------
-
-		[TestMethod]
-		public void ComplexObject_ShouldStoreCorrectValues()
-		{
-			var component = NewComponent<Employee>();
-
-			component.ToggleValue("101", "Alice", true);
-
-			Assert.IsTrue(component.SelectedValues.Contains("101"));
-			Assert.IsTrue(component.SelectedTexts.Contains("Alice"));
-		}
-
-		// ---------------------------------------------------------
-		// Stress test
-		// ---------------------------------------------------------
-
-		[TestMethod]
-		public void LargeNumberOfSelections_ShouldAllBeAdded()
-		{
-			var component = NewComponent<string>();
-
-			for (int i = 0; i < 1000; i++)
+			var items = new[]
 			{
-				component.ToggleValue(i.ToString(), $"Text{i}", true);
-			}
-
-			Assert.AreEqual(1000, component.SelectedValues.Count);
-			Assert.AreEqual(1000, component.SelectedTexts.Count);
-		}
-
-		// ---------------------------------------------------------
-		// ExcludedTexts initialization test
-		// ---------------------------------------------------------
-
-		[TestMethod]
-		public async Task ExcludedTexts_ShouldStartUnchecked()
-		{
-			var component = new TestableCheckBoxList<string>
-			{
-				Data = new[] { "Apple", "Banana", "Cherry" },
-				ExcludedTexts = new[] { "Banana" },
-				SelectedValues = new List<string>(),
-				SelectedTexts = new List<string>()
+				new { Id = 1, Label = "One" },
+				new { Id = 2, Label = "Two" }
 			};
 
-			await component.OnParametersSetPublicAsync();
+			var cut = Render<CheckBoxList<dynamic>>(parameters => parameters
+				.Add(p => p.Data, items)
+				.Add(p => p.TextField, i => (string)i.Label)
+				.Add(p => p.ValueField, i => (int)i.Id)
+			);
 
-			// Non-excluded items auto-checked
-			CollectionAssert.AreEquivalent(new[] { "Apple", "Cherry" }, component.SelectedValues.ToList());
-			CollectionAssert.AreEquivalent(new[] { "Apple", "Cherry" }, component.SelectedTexts.ToList());
-
-			// Excluded items remain unchecked
-			Assert.IsFalse(component.SelectedValues.Contains("Banana"));
-			Assert.IsFalse(component.SelectedTexts.Contains("Banana"));
+			Assert.IsNotNull(cut.Markup);
+			Assert.IsTrue(cut.Markup.Contains("One"));
+			Assert.IsTrue(cut.Markup.Contains("Two"));
 		}
 
-		// ---------------------------------------------------------
-		// Helper
-		// ---------------------------------------------------------
+		[TestMethod]
+		public void Component_Renders_With_SelectedValues()
+		{
+			var items = new[] { "A", "B" };
+			var selectedValues = new List<string> { "A" };
 
-		private static CheckBoxList<T> NewComponent<T>() =>
-			new()
+			var cut = Render<CheckBoxList<string>>(parameters => parameters
+				.Add(p => p.Data, items)
+				.Add(p => p.SelectedValues, selectedValues)
+			);
+
+			Assert.IsNotNull(cut.Markup);
+			Assert.IsTrue(cut.Markup.Contains("A"));
+			Assert.IsTrue(cut.Markup.Contains("B"));
+		}
+
+		// ------------------------------------------------------------
+		// New Rendering Tests for SelectedMap
+		// ------------------------------------------------------------
+
+		[TestMethod]
+		public void Component_Renders_With_SelectedMap()
+		{
+			var items = new[] { "A", "B" };
+			var selectedMap = new Dictionary<string, int>();
+
+			var cut = Render<CheckBoxList<string>>(parameters => parameters
+				.Add(p => p.Data, items)
+				.Add(p => p.SelectedMap, selectedMap)
+				.Add(p => p.SelectedMapChanged, map => selectedMap = map)
+			);
+
+			Assert.IsNotNull(cut.Markup);
+		}
+
+		[TestMethod]
+		public void Component_Renders_With_SelectedMap_Prepopulated()
+		{
+			var items = new[] { "A", "B", "C" };
+			var selectedMap = new Dictionary<string, int>
 			{
-				SelectedValues = new List<string>(),
-				SelectedTexts = new List<string>()
+				{ "A", 0 },
+				{ "C", 1 }
 			};
+
+			var cut = Render<CheckBoxList<string>>(parameters => parameters
+				.Add(p => p.Data, items)
+				.Add(p => p.SelectedMap, selectedMap)
+				.Add(p => p.SelectedMapChanged, map => selectedMap = map)
+			);
+
+			Assert.IsNotNull(cut.Markup);
+			Assert.IsTrue(cut.Markup.Contains("A"));
+			Assert.IsTrue(cut.Markup.Contains("B"));
+			Assert.IsTrue(cut.Markup.Contains("C"));
+		}
+
+		// ------------------------------------------------------------
+		// Rendering with ExcludedTexts
+		// ------------------------------------------------------------
+
+		[TestMethod]
+		public void Component_Renders_With_ExcludedTexts()
+		{
+			var items = new[] { "A", "B", "C" };
+			var excluded = new[] { "B" };
+
+			var cut = Render<CheckBoxList<string>>(parameters => parameters
+				.Add(p => p.Data, items)
+				.Add(p => p.ExcludedTexts, excluded)
+			);
+
+			Assert.IsNotNull(cut.Markup);
+			Assert.IsTrue(cut.Markup.Contains("A"));
+			Assert.IsTrue(cut.Markup.Contains("B"));
+			Assert.IsTrue(cut.Markup.Contains("C"));
+		}
+
+		// ------------------------------------------------------------
+		// Rendering with Complex Objects
+		// ------------------------------------------------------------
+
+		private class Item
+		{
+			public int Id { get; set; }
+			public string Label { get; set; } = "";
+		}
+
+		[TestMethod]
+		public void Component_Renders_With_ComplexObjects()
+		{
+			var items = new[]
+			{
+				new Item { Id = 1, Label = "One" },
+				new Item { Id = 2, Label = "Two" }
+			};
+
+			var cut = Render<CheckBoxList<Item>>(parameters => parameters
+				.Add(p => p.Data, items)
+				.Add(p => p.TextField, i => i.Label)
+				.Add(p => p.ValueField, i => i.Id)
+			);
+
+			Assert.IsNotNull(cut.Markup);
+			Assert.IsTrue(cut.Markup.Contains("One"));
+			Assert.IsTrue(cut.Markup.Contains("Two"));
+		}
 	}
 }

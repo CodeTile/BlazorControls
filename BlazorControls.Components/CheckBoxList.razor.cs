@@ -65,6 +65,24 @@ namespace BlazorControls.Components
 		public EventCallback<List<string>> SelectedTextsChanged { get; set; }
 
 		/// <summary>
+		/// Gets or sets a dictionary mapping each selected value to an integer.
+		/// This can represent ordering, frequency, or any parent-defined meaning.
+		/// </summary>
+		/// <remarks>
+		/// The component updates this dictionary automatically whenever a checkbox
+		/// is checked or unchecked. Keys are the string values extracted from each item.
+		/// </remarks>
+		[Parameter]
+		public Dictionary<string, int> SelectedMap { get; set; } = new();
+
+		/// <summary>
+		/// Event callback triggered when <see cref="SelectedMap"/> changes.
+		/// Enables two-way binding from the parent component.
+		/// </summary>
+		[Parameter]
+		public EventCallback<Dictionary<string, int>> SelectedMapChanged { get; set; }
+
+		/// <summary>
 		/// Gets or sets the collection of display texts that should start unchecked.
 		/// Matching is case-insensitive.
 		/// </summary>
@@ -132,8 +150,8 @@ namespace BlazorControls.Components
 		}
 
 		/// <summary>
-		/// Handles changes to checkbox state.
-		/// Adds or removes the value/text from the selected lists and triggers event callbacks.
+		/// Handles checkbox state changes and updates all bound collections:
+		/// <see cref="SelectedValues"/>, <see cref="SelectedTexts"/>, and <see cref="SelectedMap"/>.
 		/// </summary>
 		/// <param name="value">The string value associated with the checkbox.</param>
 		/// <param name="text">The display text associated with the checkbox.</param>
@@ -156,9 +174,14 @@ namespace BlazorControls.Components
 				SelectedTexts.Remove(text);
 			}
 
-			// Notify parent components
+			// Rebuild SelectedMap from scratch based on current SelectedValues
+			SelectedMap = SelectedValues
+				.Select((v, i) => new { v, i })
+				.ToDictionary(x => x.v, x => x.i);
+
 			await SelectedValuesChanged.InvokeAsync(SelectedValues);
 			await SelectedTextsChanged.InvokeAsync(SelectedTexts);
+			await SelectedMapChanged.InvokeAsync(SelectedMap);
 		}
 	}
 }

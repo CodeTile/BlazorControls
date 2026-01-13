@@ -1,121 +1,176 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
+﻿using Bunit;
 using BlazorControls.Components;
-using BlazorControls.Components.Tests;
 
-using Microsoft.AspNetCore.Components;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-
-namespace BlazorControls.Components.Tests
+namespace BlazorControls.Tests
 {
 	[TestClass]
-	public class CheckBoxListTests
+	public class CheckBoxListTests : BunitContext
 	{
-		private class TestItem
+		// ------------------------------------------------------------
+		// Initialization Tests
+		// ------------------------------------------------------------
+
+		[TestMethod]
+		public void Initialization_SelectsAll_WhenNoExcludedTexts()
+		{
+			var items = new[] { "A", "B", "C" };
+			var selectedValues = new List<string>();
+			var selectedTexts = new List<string>();
+
+			var cut = Render<CheckBoxList<string>>(parameters => parameters
+				.Add(p => p.Data, items)
+				.Add(p => p.SelectedValues, selectedValues)
+				.Add(p => p.SelectedValuesChanged, v => selectedValues = v)
+				.Add(p => p.SelectedTexts, selectedTexts)
+				.Add(p => p.SelectedTextsChanged, t => selectedTexts = t)
+			);
+
+			CollectionAssert.AreEquivalent(items, selectedValues);
+			CollectionAssert.AreEquivalent(items, selectedTexts);
+		}
+
+		[TestMethod]
+		public void Initialization_ExcludesSpecifiedTexts()
+		{
+			var items = new[] { "A", "B", "C" };
+			var excluded = new[] { "B" };
+
+			var selectedValues = new List<string>();
+			var selectedTexts = new List<string>();
+
+			var cut = Render<CheckBoxList<string>>(parameters => parameters
+				.Add(p => p.Data, items)
+				.Add(p => p.ExcludedTexts, excluded)
+				.Add(p => p.SelectedValues, selectedValues)
+				.Add(p => p.SelectedValuesChanged, v => selectedValues = v)
+				.Add(p => p.SelectedTexts, selectedTexts)
+				.Add(p => p.SelectedTextsChanged, t => selectedTexts = t)
+			);
+
+			CollectionAssert.AreEquivalent(new[] { "A", "C" }, selectedValues);
+			CollectionAssert.AreEquivalent(new[] { "A", "C" }, selectedTexts);
+		}
+
+		// ------------------------------------------------------------
+		// Toggle Behavior
+		// ------------------------------------------------------------
+
+		[TestMethod]
+		public void ToggleValue_AddsToSelectedValuesTextsAndMap()
+		{
+			var items = new[] { "X" };
+			var selectedValues = new List<string>();
+			var selectedTexts = new List<string>();
+			var selectedMap = new Dictionary<string, int>();
+
+			var cut = Render<CheckBoxList<string>>(parameters => parameters
+				.Add(p => p.Data, items)
+				.Add(p => p.SelectedValues, selectedValues)
+				.Add(p => p.SelectedValuesChanged, v => selectedValues = v)
+				.Add(p => p.SelectedTexts, selectedTexts)
+				.Add(p => p.SelectedTextsChanged, t => selectedTexts = t)
+				.Add(p => p.SelectedMap, selectedMap)
+				.Add(p => p.SelectedMapChanged, m => selectedMap = m)
+			);
+
+			cut.Instance.ToggleValue("X", "X", true);
+
+			Assert.IsTrue(selectedValues.Contains("X"));
+			Assert.IsTrue(selectedTexts.Contains("X"));
+			Assert.IsTrue(selectedMap.ContainsKey("X"));
+			Assert.AreEqual(0, selectedMap["X"]);
+		}
+
+		[TestMethod]
+		public void ToggleValue_RemovesFromSelectedValuesTextsAndMap()
+		{
+			var items = new[] { "X" };
+			var selectedValues = new List<string> { "X" };
+			var selectedTexts = new List<string> { "X" };
+			var selectedMap = new Dictionary<string, int> { { "X", 0 } };
+
+			var cut = Render<CheckBoxList<string>>(parameters => parameters
+				.Add(p => p.Data, items)
+				.Add(p => p.SelectedValues, selectedValues)
+				.Add(p => p.SelectedValuesChanged, v => selectedValues = v)
+				.Add(p => p.SelectedTexts, selectedTexts)
+				.Add(p => p.SelectedTextsChanged, t => selectedTexts = t)
+				.Add(p => p.SelectedMap, selectedMap)
+				.Add(p => p.SelectedMapChanged, m => selectedMap = m)
+			);
+
+			cut.Instance.ToggleValue("X", "X", false);
+
+			Assert.IsFalse(selectedValues.Contains("X"));
+			Assert.IsFalse(selectedTexts.Contains("X"));
+			Assert.IsFalse(selectedMap.ContainsKey("X"));
+		}
+
+		// ------------------------------------------------------------
+		// Ordering Logic in SelectedMap
+		// ------------------------------------------------------------
+
+		[TestMethod]
+		public void SelectedMap_AssignsSequentialIndexes()
+		{
+			var items = new[] { "A", "B", "C" };
+			var selectedMap = new Dictionary<string, int>();
+
+			var cut = Render<CheckBoxList<string>>(parameters => parameters
+				.Add(p => p.Data, items)
+				.Add(p => p.SelectedMap, selectedMap)
+				.Add(p => p.SelectedMapChanged, m => selectedMap = m)
+			);
+
+			cut.Instance.ToggleValue("A", "A", true);
+			cut.Instance.ToggleValue("B", "B", true);
+			cut.Instance.ToggleValue("C", "C", true);
+
+			Assert.AreEqual(0, selectedMap["A"]);
+			Assert.AreEqual(1, selectedMap["B"]);
+			Assert.AreEqual(2, selectedMap["C"]);
+		}
+
+		// ------------------------------------------------------------
+		// Complex Object Support
+		// ------------------------------------------------------------
+
+		private class Item
 		{
 			public int Id { get; set; }
-			public string Name { get; set; } = string.Empty;
+			public string Label { get; set; } = "";
 		}
 
 		[TestMethod]
-		public async Task OnParametersSet_InitializesSelectedValues_AndExcludesCorrectly()
+		public void SupportsComplexObjects()
 		{
-			// Arrange
-			var data = new List<string> { "One", "Two", "Three", "Four" };
-			bool valuesCalled = false;
-			bool textsCalled = false;
-
-			var component = new TestableCheckBoxList<string>
+			var items = new[]
 			{
-				Data = data,
-				ExcludedTexts = new[] { "Two", "Four" },
-				SelectedValuesChanged = new EventCallback<List<string>>(null,
-					new Action<List<string>>(list => valuesCalled = true)),
-				SelectedTextsChanged = new EventCallback<List<string>>(null,
-					new Action<List<string>>(list => textsCalled = true))
+				new Item { Id = 1, Label = "One" },
+				new Item { Id = 2, Label = "Two" }
 			};
 
-			// Act
-			await component.OnParametersSetPublicAsync();
+			var selectedValues = new List<string>();
+			var selectedTexts = new List<string>();
+			var selectedMap = new Dictionary<string, int>();
 
-			// Assert: non-excluded items are selected
-			CollectionAssert.AreEquivalent(new[] { "One", "Three" }, component.SelectedValues);
-			CollectionAssert.AreEquivalent(new[] { "One", "Three" }, component.SelectedTexts);
+			var cut = Render<CheckBoxList<Item>>(parameters => parameters
+				.Add(p => p.Data, items)
+				.Add(p => p.TextField, i => i.Label)
+				.Add(p => p.ValueField, i => i.Id)
+				.Add(p => p.SelectedValues, selectedValues)
+				.Add(p => p.SelectedValuesChanged, v => selectedValues = v)
+				.Add(p => p.SelectedTexts, selectedTexts)
+				.Add(p => p.SelectedTextsChanged, t => selectedTexts = t)
+				.Add(p => p.SelectedMap, selectedMap)
+				.Add(p => p.SelectedMapChanged, m => selectedMap = m)
+			);
 
-			// Assert: excluded items are not selected
-			Assert.IsFalse(component.SelectedValues.Contains("Two"));
-			Assert.IsFalse(component.SelectedValues.Contains("Four"));
+			cut.Instance.ToggleValue("1", "One", true);
 
-			// Assert: callbacks invoked
-			Assert.IsTrue(valuesCalled);
-			Assert.IsTrue(textsCalled);
-		}
-
-		[TestMethod]
-		public void ToggleValue_AddsAndRemovesItems_AndInvokesCallbacks()
-		{
-			// Arrange
-			var component = new CheckBoxList<string>();
-
-			bool valuesCalled = false;
-			bool textsCalled = false;
-
-			component.SelectedValuesChanged = new EventCallback<List<string>>(null,
-				new Action<List<string>>(list => valuesCalled = true));
-
-			component.SelectedTextsChanged = new EventCallback<List<string>>(null,
-				new Action<List<string>>(list => textsCalled = true));
-
-			string value = "val1";
-			string text = "Text1";
-
-			// Act: check the box
-			component.ToggleValue(value, text, true);
-
-			// Assert add
-			Assert.IsTrue(component.SelectedValues.Contains(value));
-			Assert.IsTrue(component.SelectedTexts.Contains(text));
-			Assert.IsTrue(valuesCalled);
-			Assert.IsTrue(textsCalled);
-
-			// Reset callback flags
-			valuesCalled = false;
-			textsCalled = false;
-
-			// Act: uncheck the box
-			component.ToggleValue(value, text, false);
-
-			// Assert remove
-			Assert.IsFalse(component.SelectedValues.Contains(value));
-			Assert.IsFalse(component.SelectedTexts.Contains(text));
-			Assert.IsTrue(valuesCalled);
-			Assert.IsTrue(textsCalled);
-		}
-
-		[TestMethod]
-		public void DataAndValueFields_CanBeUsed()
-		{
-			// Arrange
-			var items = new List<TestItem>
-			{
-				new() { Id = 1, Name = "Item1" },
-				new() { Id = 2, Name = "Item2" }
-			};
-
-			var component = new CheckBoxList<TestItem>
-			{
-				Data = items,
-				TextField = i => i.Name,
-				ValueField = i => i.Id
-			};
-
-			// Act & Assert
-			Assert.AreEqual(2, component.Data.Count());
-			Assert.AreEqual("Item1", component.TextField!(items[0]));
-			Assert.AreEqual(2, component.ValueField!(items[1]));
+			Assert.IsTrue(selectedValues.Contains("1"));
+			Assert.IsTrue(selectedTexts.Contains("One"));
+			Assert.IsTrue(selectedMap.ContainsKey("1"));
 		}
 	}
 }

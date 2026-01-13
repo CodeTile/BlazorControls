@@ -16,16 +16,13 @@
               SelectedValues="@SelectedEmployeeIds"
               SelectedValuesChanged="OnEmployeeIdsChanged"
               SelectedTexts="@SelectedEmployeeNames"
-              SelectedTextsChanged="OnEmployeeNamesChanged" />
+              SelectedTextsChanged="OnEmployeeNamesChanged"
+              SelectedMap="@SelectedEmployeeMap"
+              SelectedMapChanged="OnEmployeeMapChanged" />
 
 <div class="output-row">
-    <label>Selected Employee IDs:</label>
-    @EmployeeIdsOutput
-</div>
-
-<div class="output-row">
-    <label>Selected Employee Names:</label>
-    @EmployeeNamesOutput
+    <label>Selected Employee Map:</label>
+    @EmployeeMapOutput
 </div>
 
 <br />
@@ -37,17 +34,19 @@
               SelectedValues="@SelectedColors"
               SelectedValuesChanged="OnColorsChanged"
               SelectedTexts="@SelectedColorNames"
-              SelectedTextsChanged="OnColorNamesChanged" 
-              ExcludedTexts="@(new string[]{"Blue"})"/>
+              SelectedTextsChanged="OnColorNamesChanged"
+              SelectedMap="@SelectedColorMap"
+              SelectedMapChanged="OnColorMapChanged"
+              ExcludedTexts="@(new string[] { "Blue" })" />
 
 <div class="output-row">
-    <label>Selected Colors:</label>
-    @ColorOutput
+    <label>Selected Color Map:</label>
+    @ColorMapOutput
 </div>
 
 <br />
 
-<!-- Scenario 3: Objects with No Value Field -->
+<!-- Scenario 3: Departments (Object List, Text Only) -->
 <h3>3. Departments (Object List, Text Only)</h3>
 
 <CheckBoxList Data="@DepartmentList"
@@ -56,12 +55,35 @@
               SelectedValues="@SelectedDepartments"
               SelectedValuesChanged="OnDepartmentsChanged"
               SelectedTexts="@SelectedDepartmentNames"
-              SelectedTextsChanged="OnDepartmentNamesChanged" />
+              SelectedTextsChanged="OnDepartmentNamesChanged"
+              SelectedMap="@SelectedDepartmentMap"
+              SelectedMapChanged="OnDepartmentMapChanged" />
 
 <div class="output-row">
-    <label>Selected Departments:</label>
-    @DepartmentOutput
+    <label>Selected Department Map:</label>
+    @DepartmentMapOutput
 </div>
+
+<br />
+
+<!-- Scenario 4: Statuses (Dictionary<string,int>) -->
+<h3>4. Statuses (Dictionary&lt;string,int&gt;)</h3>
+
+<CheckBoxList Data="@StatusList"
+              TextField="@(kvp => kvp.Key)"
+              ValueField="@(kvp => kvp.Key)"
+              SelectedValues="@SelectedStatuses"
+              SelectedValuesChanged="OnStatusesChanged"
+              SelectedTexts="@SelectedStatusTexts"
+              SelectedTextsChanged="OnStatusTextsChanged"
+              SelectedMap="@SelectedStatusMap"
+              SelectedMapChanged="OnStatusMapChanged" />
+
+<div class="output-row">
+    <label>Selected Status Map:</label>
+    @StatusMapOutput
+</div>
+
 @code {
     // -----------------------------
     // Scenario 1: Employees
@@ -73,24 +95,16 @@
         new Employee { EmployeeId = 3, FirstName = "Charlie", LastName = "Brown", MobileNo = "789", Email = "charlie@example.com" }
     };
 
-
     private List<string> SelectedEmployeeIds { get; set; } = new();
     private List<string> SelectedEmployeeNames { get; set; } = new();
+    private Dictionary<string, int> SelectedEmployeeMap { get; set; } = new();
 
-    private string EmployeeIdsOutput => string.Join(", ", SelectedEmployeeIds);
-    private string EmployeeNamesOutput => string.Join(", ", SelectedEmployeeNames);
+    private string EmployeeMapOutput =>
+        string.Join(", ", SelectedEmployeeMap.Select(kvp => $"{kvp.Key}:{kvp.Value}"));
 
-    private Task OnEmployeeIdsChanged(List<string> ids)
-    {
-        SelectedEmployeeIds = ids;
-        return Task.CompletedTask;
-    }
-
-    private Task OnEmployeeNamesChanged(List<string> names)
-    {
-        SelectedEmployeeNames = names;
-        return Task.CompletedTask;
-    }
+    private Task OnEmployeeIdsChanged(List<string> ids) { SelectedEmployeeIds = ids; return Task.CompletedTask; }
+    private Task OnEmployeeNamesChanged(List<string> names) { SelectedEmployeeNames = names; return Task.CompletedTask; }
+    private Task OnEmployeeMapChanged(Dictionary<string, int> map) { SelectedEmployeeMap = map; return Task.CompletedTask; }
 
     // -----------------------------
     // Scenario 2: Colors
@@ -98,19 +112,14 @@
     private List<string> ColorList = new() { "Red", "Green", "Blue", "Yellow" };
     private List<string> SelectedColors { get; set; } = new();
     private List<string> SelectedColorNames { get; set; } = new();
-    private string ColorOutput => string.Join(", ", SelectedColorNames);
+    private Dictionary<string, int> SelectedColorMap { get; set; } = new();
 
-    private Task OnColorsChanged(List<string> values)
-    {
-        SelectedColors = values;
-        return Task.CompletedTask;
-    }
+    private string ColorMapOutput =>
+        string.Join(", ", SelectedColorMap.Select(kvp => $"{kvp.Key}:{kvp.Value}"));
 
-    private Task OnColorNamesChanged(List<string> names)
-    {
-        SelectedColorNames = names;
-        return Task.CompletedTask;
-    }
+    private Task OnColorsChanged(List<string> values) { SelectedColors = values; return Task.CompletedTask; }
+    private Task OnColorNamesChanged(List<string> names) { SelectedColorNames = names; return Task.CompletedTask; }
+    private Task OnColorMapChanged(Dictionary<string, int> map) { SelectedColorMap = map; return Task.CompletedTask; }
 
     // -----------------------------
     // Scenario 3: Departments
@@ -118,17 +127,39 @@
     private List<string> DepartmentList = new() { "HR", "Finance", "IT", "Sales" };
     private List<string> SelectedDepartments { get; set; } = new();
     private List<string> SelectedDepartmentNames { get; set; } = new();
-    private string DepartmentOutput => string.Join(", ", SelectedDepartmentNames);
+    private Dictionary<string, int> SelectedDepartmentMap { get; set; } = new();
 
-    private Task OnDepartmentsChanged(List<string> values)
-    {
-        SelectedDepartments = values;
-        return Task.CompletedTask;
-    }
+    private string DepartmentMapOutput =>
+        string.Join(", ", SelectedDepartmentMap.Select(kvp => $"{kvp.Key}:{kvp.Value}"));
 
-    private Task OnDepartmentNamesChanged(List<string> names)
+    private Task OnDepartmentsChanged(List<string> values) { SelectedDepartments = values; return Task.CompletedTask; }
+    private Task OnDepartmentNamesChanged(List<string> names) { SelectedDepartmentNames = names; return Task.CompletedTask; }
+    private Task OnDepartmentMapChanged(Dictionary<string, int> map) { SelectedDepartmentMap = map; return Task.CompletedTask; }
+
+    // -----------------------------
+    // Scenario 4: Status Dictionary
+    // -----------------------------
+    private Dictionary<string, int> StatusList = new()
     {
-        SelectedDepartmentNames = names;
-        return Task.CompletedTask;
-    }
+        { "Open", 12 },
+        { "In Progress", 7 },
+        { "Closed", 30 },
+        { "On Hold", 3 }
+    };
+
+    private List<string> SelectedStatuses { get; set; } = new();
+    private List<string> SelectedStatusTexts { get; set; } = new();
+    private Dictionary<string, int> SelectedStatusMap { get; set; } = new();
+
+    private string StatusMapOutput =>
+     string.Join(", ",
+         SelectedStatusMap
+             .OrderBy(kvp => kvp.Key)   // alphabetical sort
+             .Select(kvp => $"{kvp.Key}:{kvp.Value}")
+     );
+
+
+    private Task OnStatusesChanged(List<string> values) { SelectedStatuses = values; return Task.CompletedTask; }
+    private Task OnStatusTextsChanged(List<string> names) { SelectedStatusTexts = names; return Task.CompletedTask; }
+    private Task OnStatusMapChanged(Dictionary<string, int> map) { SelectedStatusMap = map; return Task.CompletedTask; }
 }
