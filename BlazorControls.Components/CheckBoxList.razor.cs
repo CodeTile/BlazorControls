@@ -1,162 +1,132 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Components;
 
 namespace BlazorControls.Components
 {
 	/// <summary>
-	/// A reusable checklist component that supports both complex objects and simple string lists.
-	/// Automatically checks all items not included in <see cref="ExcludedTexts"/> and provides two-way binding.
+	/// A reusable checkbox list component that supports:
+	/// - Object lists and string lists
+	/// - Auto-selection on startup
+	/// - UncheckedInitially for default unchecked items
+	/// - Two-way binding via @bind-SelectedMap
+	/// - Positional maps for objects, key-only maps for strings
 	/// </summary>
-	/// <typeparam name="TItem">The type of items in the checklist.</typeparam>
 	public partial class CheckBoxList<TItem> : ComponentBase
 	{
 		/// <summary>
-		/// Gets or sets the collection of items to display in the checklist.
-		/// Can be complex objects or simple strings.
+		/// The data source for the checkbox list.
+		/// </summary>
+		[Parameter] public IEnumerable<TItem> Data { get; set; } = Enumerable.Empty<TItem>();
+
+		/// <summary>
+		/// Function to extract display text from an item.
+		/// </summary>
+		[Parameter] public Func<TItem, string>? TextField { get; set; }
+
+		/// <summary>
+		/// Function to extract value from an item.
+		/// </summary>
+		[Parameter] public Func<TItem, string>? ValueField { get; set; }
+
+		/// <summary>
+		/// The list of selected values.
+		/// </summary>
+		[Parameter] public List<string> SelectedValues { get; set; } = new();
+
+		/// <summary>
+		/// Raised when SelectedValues changes.
+		/// </summary>
+		[Parameter] public EventCallback<List<string>> SelectedValuesChanged { get; set; }
+
+		/// <summary>
+		/// The list of selected display texts.
+		/// </summary>
+		[Parameter] public List<string> SelectedTexts { get; set; } = new();
+
+		/// <summary>
+		/// Raised when SelectedTexts changes.
+		/// </summary>
+		[Parameter] public EventCallback<List<string>> SelectedTextsChanged { get; set; }
+
+		private Dictionary<string, int> _selectedMap = new();
+
+		/// <summary>
+		/// Two-way bound map of selected items.
+		/// For string lists: key-only (value = 0).
+		/// For object lists: key:index.
 		/// </summary>
 		[Parameter]
-		public IEnumerable<TItem> Data { get; set; } = [];
-
-		/// <summary>
-		/// Gets or sets a function to extract the display text from each item.
-		/// Optional if <typeparamref name="TItem"/> is a <see cref="string"/>.
-		/// </summary>
-		[Parameter]
-		public Func<TItem, string>? TextField { get; set; }
-
-		/// <summary>
-		/// Gets or sets a function to extract the value from each item.
-		/// Optional if <typeparamref name="TItem"/> is a <see cref="string"/>.
-		/// The value is converted to a string internally.
-		/// </summary>
-		[Parameter]
-		public Func<TItem, object>? ValueField { get; set; }
-
-		/// <summary>
-		/// Gets or sets the list of selected values.
-		/// Values are always stored as strings.
-		/// </summary>
-		[Parameter]
-		public List<string> SelectedValues { get; set; } = new();
-
-		/// <summary>
-		/// Event callback triggered when <see cref="SelectedValues"/> changes.
-		/// Allows two-way binding from the parent component.
-		/// </summary>
-		[Parameter]
-		public EventCallback<List<string>> SelectedValuesChanged { get; set; }
-
-		/// <summary>
-		/// Gets or sets the list of selected display texts.
-		/// Useful for when the parent needs both ID and human-readable label.
-		/// </summary>
-		[Parameter]
-		public List<string> SelectedTexts { get; set; } = new();
-
-		/// <summary>
-		/// Event callback triggered when <see cref="SelectedTexts"/> changes.
-		/// Allows two-way binding from the parent component.
-		/// </summary>
-		[Parameter]
-		public EventCallback<List<string>> SelectedTextsChanged { get; set; }
-
-		/// <summary>
-		/// Gets or sets a dictionary mapping each selected value to an integer.
-		/// This can represent ordering, frequency, or any parent-defined meaning.
-		/// </summary>
-		/// <remarks>
-		/// The component updates this dictionary automatically whenever a checkbox
-		/// is checked or unchecked. Keys are the string values extracted from each item.
-		/// </remarks>
-		[Parameter]
-		public Dictionary<string, int> SelectedMap { get; set; } = new();
-
-		/// <summary>
-		/// Event callback triggered when <see cref="SelectedMap"/> changes.
-		/// Enables two-way binding from the parent component.
-		/// </summary>
-		[Parameter]
-		public EventCallback<Dictionary<string, int>> SelectedMapChanged { get; set; }
-
-		/// <summary>
-		/// Gets or sets the collection of display texts that should start unchecked.
-		/// Matching is case-insensitive.
-		/// </summary>
-		[Parameter]
-		public IEnumerable<string>? ExcludedTexts { get; set; }
-
-		/// <summary>
-		/// Internal cached set of excluded texts for fast, case-insensitive lookup.
-		/// </summary>
-		private HashSet<string>? _excludedTexts;
-
-		/// <summary>
-		/// Tracks whether the initial selection has been applied.
-		/// Prevents overwriting user changes on subsequent parameter updates.
-		/// </summary>
-		private bool _initialized;
-
-		/// <summary>
-		/// Called by the framework when component parameters are set or updated.
-		/// Initializes the selected values and texts based on <see cref="ExcludedTexts"/> only once.
-		/// </summary>
-		protected override async Task OnParametersSetAsync()
+		public Dictionary<string, int> SelectedMap
 		{
-			if (!_initialized)
+			get => _selectedMap;
+			set
 			{
-				// Build a case-insensitive set of excluded texts
-				_excludedTexts = ExcludedTexts?
-					.Where(x => !string.IsNullOrWhiteSpace(x))
-					.ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-				// Track whether SelectedValues/Texts changed during initialization
-				bool valuesChanged = false;
-				bool textsChanged = false;
-
-				// Loop through all items in Data
-				foreach (var item in Data)
+				if (!ReferenceEquals(_selectedMap, value))
 				{
-					var text = TextField != null ? TextField(item) : item?.ToString() ?? string.Empty;
-					var value = ValueField != null ? ValueField(item)?.ToString() ?? text : text;
-
-					if (_excludedTexts != null && _excludedTexts.Contains(text))
-					{
-						// Excluded items are unchecked
-						if (SelectedValues.Remove(value)) valuesChanged = true;
-						if (SelectedTexts.Remove(text)) textsChanged = true;
-					}
-					else
-					{
-						// Non-excluded items are checked
-						if (!SelectedValues.Contains(value)) { SelectedValues.Add(value); valuesChanged = true; }
-						if (!SelectedTexts.Contains(text)) { SelectedTexts.Add(text); textsChanged = true; }
-					}
+					_selectedMap = value ?? new();
+					SelectedMapChanged.InvokeAsync(_selectedMap);
 				}
-
-				_initialized = true;
-
-				// Notify parent component if any changes occurred
-				if (valuesChanged)
-					await SelectedValuesChanged.InvokeAsync(SelectedValues);
-
-				if (textsChanged)
-					await SelectedTextsChanged.InvokeAsync(SelectedTexts);
-				ExcludedTexts = null;
 			}
 		}
 
 		/// <summary>
-		/// Handles checkbox state changes and updates all bound collections:
-		/// <see cref="SelectedValues"/>, <see cref="SelectedTexts"/>, and <see cref="SelectedMap"/>.
+		/// Raised when SelectedMap changes.
 		/// </summary>
-		/// <param name="value">The string value associated with the checkbox.</param>
-		/// <param name="text">The display text associated with the checkbox.</param>
-		/// <param name="changed">The new checked state from the checkbox input.</param>
-		public async void ToggleValue(string value, string text, object changed)
+		[Parameter] public EventCallback<Dictionary<string, int>> SelectedMapChanged { get; set; }
+
+		/// <summary>
+		/// Items listed here will start unchecked.
+		/// </summary>
+		[Parameter] public IEnumerable<string>? UncheckedInitially { get; set; }
+
+		private bool _initialized = false;
+
+		private bool IsStringList => typeof(TItem) == typeof(string);
+
+		protected override void OnAfterRender(bool firstRender)
+		{
+			if (firstRender && !_initialized)
+			{
+				_initialized = true;
+
+				InitializeSelections();
+				BuildMap();
+				EmitAll();
+			}
+		}
+
+		/// <summary>
+		/// Auto-selects all items except those in UncheckedInitially.
+		/// </summary>
+		private void InitializeSelections()
+		{
+			foreach (var item in Data)
+			{
+				string text = GetText(item);
+				string value = GetValue(item);
+
+				bool shouldStartUnchecked =
+					UncheckedInitially != null &&
+					UncheckedInitially.Contains(text);
+
+				if (!shouldStartUnchecked)
+				{
+					if (!SelectedValues.Contains(value))
+						SelectedValues.Add(value);
+
+					if (!SelectedTexts.Contains(text))
+						SelectedTexts.Add(text);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Handles checkbox toggle events.
+		/// </summary>
+		private void ToggleValue(string value, string text, object changed)
 		{
 			bool isChecked = changed is bool b && b;
 
@@ -174,14 +144,67 @@ namespace BlazorControls.Components
 				SelectedTexts.Remove(text);
 			}
 
-			// Rebuild SelectedMap from scratch based on current SelectedValues
+			BuildMap();
+			EmitAll();
+		}
+
+		/// <summary>
+		/// Builds the SelectedMap based on current selections.
+		/// </summary>
+		private void BuildMap()
+		{
+			// Case 1: String list → keys only
+			if (IsStringList)
+			{
+				SelectedMap = SelectedValues
+					.Distinct()
+					.ToDictionary(v => v, v => 0);
+
+				return;
+			}
+
+			// Case 2: Dictionary<string,int> → use dictionary values
+			if (Data is IEnumerable<KeyValuePair<string, int>> kvps)
+			{
+				var dict = kvps.ToDictionary(k => k.Key, k => k.Value);
+
+				SelectedMap = SelectedValues
+					.Where(v => dict.ContainsKey(v))
+					.ToDictionary(v => v, v => dict[v]);
+
+				return;
+			}
+
+			// Case 3: Object list → positional index
 			SelectedMap = SelectedValues
 				.Select((v, i) => new { v, i })
 				.ToDictionary(x => x.v, x => x.i);
+		}
 
-			await SelectedValuesChanged.InvokeAsync(SelectedValues);
-			await SelectedTextsChanged.InvokeAsync(SelectedTexts);
-			await SelectedMapChanged.InvokeAsync(SelectedMap);
+		/// <summary>
+		/// Emits all change events.
+		/// </summary>
+		private void EmitAll()
+		{
+			SelectedValuesChanged.InvokeAsync(SelectedValues);
+			SelectedTextsChanged.InvokeAsync(SelectedTexts);
+			StateHasChanged();
+		}
+
+		private string GetText(TItem item)
+		{
+			if (TextField != null)
+				return TextField(item);
+
+			return item?.ToString() ?? string.Empty;
+		}
+
+		private string GetValue(TItem item)
+		{
+			if (ValueField != null)
+				return ValueField(item);
+
+			return item?.ToString() ?? string.Empty;
 		}
 	}
 }

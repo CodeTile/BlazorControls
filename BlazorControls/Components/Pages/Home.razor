@@ -6,22 +6,18 @@
 
 <div class="chart-wrapper">
     <div class="home-checkboxlist">
-        <CheckBoxList Data="@AllTaskLabels"
-                      SelectedTexts="@CurrentTaskLabels"
-                      SelectedValues="@SelectedTaskValues"
-                      SelectedTextsChanged="OnColorNamesChanged"
-                      SelectedValuesChanged="OnColorNameValuesChanged"
-                      ExcludedTexts="@(new List<string> { "Completed","Blocked" })" />
 
-        @* SelectedValues="@SelectedColors" 
-                        SelectedValuesChanged="OnColorsChanged" 
-                       SelectedTextsChanged="OnColorNamesChanged" *@
+        <CheckBoxList TItem="string"
+                      Data="@AllTaskLabels"
+                      @bind-SelectedMap="SelectedTaskMap"
+                      UncheckedInitially="@(new List<string> { "Completed", "Blocked" })" />
+
     </div>
-    
+
     <!-- Donut Chart -->
     <div class="chart-container">
         <DonutChart Title="Tasks (Donut)"
-                    InnerTitle="@CurrentTaskLabels!.Count().ToString()"
+                    InnerTitle="@CurrentTaskLabels.Count.ToString()"
                     IsDonut="true"
                     Thickness="40"
                     Data="@pieData"
@@ -29,7 +25,7 @@
                     StatusColors="@TaskColors"
                     OnSliceClick="HandleSliceClick"
                     OnCenterClick="HandleCenterClick"
-                    ShowLegend="true" />      
+                    ShowLegend="true" />
     </div>
 
     <!-- Pie Chart -->
@@ -43,12 +39,11 @@
                     OnSliceClick="HandleSliceClick"
                     ShowLegend="true" />
 
-
         <div class="filter-text">
             <strong>Filtered Tasks:</strong>
-            @if (CurrentTaskLabels is not null)
+            @if (CurrentTaskLabels.Count > 0)
             {
-                <span>@string.Join(", ", CurrentTaskLabels.OrderBy(m=>m))</span>
+                <span>@string.Join(", ", CurrentTaskLabels.OrderBy(m => m))</span>
             }
             else
             {
@@ -58,3 +53,77 @@
     </div>
 
 </div>
+
+@code {
+    [Inject] private NavigationManager Nav { get; set; } = default!;
+
+    // -----------------------------
+    // Pie chart data
+    // -----------------------------
+    private Dictionary<string, int> pieData = new()
+    {
+        ["Completed"] = 30,
+        ["In Progress"] = 25,
+        ["Blocked"] = 5,
+        ["Not Started"] = 12,
+        ["On Hold"] = 4,
+        ["Under Review"] = 17,
+        ["Pending Approval"] = 3,
+        ["Cancelled"] = 2,
+        ["Deferred"] = 6
+    };
+
+    private List<string> AllTaskLabels => pieData.Keys.Order().ToList();
+
+    // -----------------------------
+    // SelectedMap binding
+    // -----------------------------
+    private Dictionary<string, int> SelectedTaskMap { get; set; } = new();
+
+    // Derived list of labels for charts
+    private List<string> CurrentTaskLabels =>
+        SelectedTaskMap.Keys.Order().ToList();
+
+    // -----------------------------
+    // Timers (unchanged)
+    // -----------------------------
+    private System.Timers.Timer? _pieTimer;
+    private readonly Random _rand = new();
+
+    protected override void OnInitialized()
+    {
+        // Initial selection is handled by the component itself
+        // based on UncheckedInitially
+    }
+
+    private void HandleSliceClick(string label)
+    {
+        Console.WriteLine($"[Home] Slice clicked: {label}");
+        Nav.NavigateTo("/counter");
+    }
+
+    private void HandleCenterClick()
+    {
+        Console.WriteLine("[Home] Center clicked");
+        Nav.NavigateTo("/weather");
+    }
+
+    public void Dispose()
+    {
+        _pieTimer?.Dispose();
+    }
+
+    // Colours for Task chart
+    private Dictionary<string, string> TaskColors = new()
+    {
+        ["Completed"] = "#4CAF50",
+        ["In Progress"] = "#2196F3",
+        ["Blocked"] = "#F44336",
+        ["Not Started"] = "#9E9E9E",
+        ["On Hold"] = "#FF9800",
+        ["Under Review"] = "#9C27B0",
+        ["Pending Approval"] = "#FFC107",
+        ["Cancelled"] = "#000000",
+        ["Deferred"] = "#795548"
+    };
+}

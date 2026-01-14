@@ -1,168 +1,196 @@
-﻿# ✔️ CheckBoxList<TItem> Component
-A flexible, data‑driven checklist component for Blazor.
-Supports complex objects, automatic selection rules, two‑way binding, and exclusion logic.
+﻿ # ✔️ CheckBoxList<TItem> Component
+ A flexible, data‑driven checklist component for Blazor.
+ Supports complex objects, dictionaries, automatic selection rules,
+ and full two‑way binding via @bind.
 
----
+ -----------------------------------------------------------------------------
 
-## ✨ Features
+ ## ✨ Features
 
-- Works with any data type (`TItem`)
-- Automatic text/value extraction
-- Two‑way binding for:
-  - `SelectedValues`
-  - `SelectedTexts`
-- Case‑insensitive exclusion list (`ExcludedTexts`)
-- Automatically checks all non‑excluded items on first render
-- Supports both simple strings and complex objects
-- Lightweight markup and easy styling
+ - Works with any data type (`TItem`)
+ - Automatic text/value extraction
+ - Three two‑way bindings:
+   - `@bind-SelectedValues`
+   - `@bind-SelectedTexts`
+   - `@bind-SelectedMap` (recommended)
+ - `UncheckedInitially` to control default checked state
+ - Auto‑selects all items except those listed in `UncheckedInitially`
+ - Supports:
+   - String lists
+   - Object lists
+   - Dictionary<string,int>
+ - Emits initial state on first render
+ - Lightweight markup and easy to style
 
----
+ -----------------------------------------------------------------------------
 
-## 📦 Installation
+ ## 📦 Installation
 
-Add the namespace:
+ Add the namespace:
+ @using BlazorControls.Components
 
-    @using BlazorControls.Components.Shared
+ Include your stylesheet (optional):
+ <link href="css/fui-checklist.css" rel="stylesheet" />
 
-Include the stylesheet:
+ -----------------------------------------------------------------------------
 
-    <link href="css/fui-checklist.css" rel="stylesheet" />
+ ## 🚀 Basic Usage
 
----
+ ### ✔️ Simple string list
 
-## 🚀 Basic Usage
+ <CheckBoxList TItem="string"
+               Data="@Fruits"
+               @bind-SelectedMap="FruitMap" />
 
-### Simple string list
+ @code {
+     List<string> Fruits = new() { "Apple", "Banana", "Cherry" };
+     Dictionary<string,int> FruitMap = new();
+ }
 
-    <CheckBoxList string>
-        Data="new[] { "Apple", "Banana", "Cherry" }"
-        SelectedValues="@selected"
-        SelectedValuesChanged="@((v) => selected = v)" />
+ Output example:
+ Apple:0, Banana:0, Cherry:0
+ (String lists always return key‑only maps.)
 
-### Complex objects
+ -----------------------------------------------------------------------------
 
-    <CheckBoxList TItem="Product"
-                  Data="@Products"
-                  TextField="p => p.Name"
-                  ValueField="p => p.Id"
-                  SelectedValues="@selectedIds"
-                  SelectedValuesChanged="@((v) => selectedIds = v)" />
+ ### ✔️ Complex objects
 
----
+ <CheckBoxList TItem="Product"
+               Data="@Products"
+               TextField="p => p.Name"
+               ValueField="p => p.Id.ToString()"
+               @bind-SelectedMap="SelectedProductMap" />
 
-## 🧩 Parameters
+ @code {
+     List<Product> Products = GetProducts();
+     Dictionary<string,int> SelectedProductMap = new();
+ }
 
-Parameter | Type | Description
---------- | ---- | -----------
-Data | IEnumerable<TItem> | Items to display
-TextField | Func<TItem,string>? | Extracts display text
-ValueField | Func<TItem,object>? | Extracts value (converted to string)
-SelectedValues | List<string> | Currently selected values
-SelectedValuesChanged | EventCallback<List<string>> | Two‑way binding callback
-SelectedTexts | List<string> | Selected display texts
-SelectedTextsChanged | EventCallback<List<string>> | Two‑way binding callback
-ExcludedTexts | IEnumerable<string>? | Items that should start unchecked (case‑insensitive)
+ Output example:
+ 101:0, 203:1
+ (Object lists return key:index based on selection order.)
 
----
+ -----------------------------------------------------------------------------
 
-## 🧠 Initialization Logic
+ ### ✔️ Dictionary support (key → value)
 
-On first render:
+ <CheckBoxList TItem="KeyValuePair<string,int>"
+               Data="@StatusList"
+               TextField="s => s.Key"
+               ValueField="s => s.Key"
+               @bind-SelectedMap="SelectedStatusMap" />
 
-- All items **not** in `ExcludedTexts` are automatically checked
-- All items **in** `ExcludedTexts` are unchecked
-- Matching is **case‑insensitive**
-- After initialization:
-  - `SelectedValuesChanged` fires if values changed
-  - `SelectedTextsChanged` fires if texts changed
-- `ExcludedTexts` is cleared to avoid re‑initializing
+ @code {
+     Dictionary<string,int> StatusList = new()
+     {
+         { "Open", 12 },
+         { "Closed", 30 }
+     };
 
-This ensures user interaction is never overwritten on subsequent renders.
+     Dictionary<string,int> SelectedStatusMap = new();
+ }
 
----
+ Output example:
+ Open:12, Closed:30
+ (Dictionaries return key:dictionaryValue.)
 
-## 🖱️ Interaction
+ -----------------------------------------------------------------------------
 
-When a checkbox changes:
+ ## 🧩 Parameters
 
-- The component updates:
-  - `SelectedValues`
-  - `SelectedTexts`
-- Then fires:
-  - `SelectedValuesChanged`
-  - `SelectedTextsChanged`
+ | Parameter            | Type                        | Description                              |
+ |----------------------|-----------------------------|------------------------------------------|
+ | Data                 | IEnumerable<TItem>          | Items to display                         |
+ | TextField            | Func<TItem,string>?         | Extracts display text                    |
+ | ValueField           | Func<TItem,string>?         | Extracts value key                       |
+ | @bind-SelectedValues | List<string>                | Selected value keys                      |
+ | @bind-SelectedTexts  | List<string>                | Selected display texts                   |
+ | @bind-SelectedMap    | Dictionary<string,int>      | Selected map (recommended)               |
+ | UncheckedInitially   | IEnumerable<string>?        | Items that should start unchecked        |
 
-Example handler:
+ -----------------------------------------------------------------------------
 
-    void OnValuesChanged(List<string> values)
-    {
-        Console.WriteLine("Selected: " + string.Join(", ", values));
-    }
+ ## 🧠 Initialization Logic
 
----
+ On first render:
 
-## 🎨 Markup Structure
+ - All items **not** in `UncheckedInitially` start checked
+ - Items in `UncheckedInitially` start unchecked
+ - The component emits:
+   - `SelectedValues`
+   - `SelectedTexts`
+   - `SelectedMap`
+ - No re‑initialization occurs on subsequent renders
 
-Rendered HTML:
+ This ensures the parent receives the correct initial state immediately.
 
-    <div class="fui-checklist">
-        <label>
-            <input type="checkbox" />
-            Item Text
-        </label>
-        ...
-    </div>
+ -----------------------------------------------------------------------------
 
----
+ ## 🖱️ Interaction
 
-## 🎨 Styling
+ When a checkbox is toggled:
 
-Default CSS:
+ - `SelectedValues` updates
+ - `SelectedTexts` updates
+ - `SelectedMap` updates
+ - All three bindings emit automatically
 
-    .fui-checklist {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        padding: 8px 4px;
-    }
+ Example:
 
-    .fui-checklist-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 4px 6px;
-        cursor: pointer;
-        font-size: 14px;
-        border-radius: 4px;
-        transition: background-color 0.15s ease;
-    }
+ <CheckBoxList Data="@Fruits"
+               @bind-SelectedMap="FruitMap" />
 
-    .fui-checklist-item:hover {
-        background-color: var(--neutral-layer-2);
-    }
+ -----------------------------------------------------------------------------
 
-    .fui-checklist-item input[type="checkbox"] {
-        width: 16px;
-        height: 16px;
-        accent-color: var(--accent-fill-rest);
-    }
+ ## 🎨 Markup Structure
 
----
+ Rendered HTML:
 
-## 🧪 Example: Two‑Way Binding
+ <div class="checkbox-list">
+     <div class="checkbox-row">
+         <input type="checkbox" />
+         <label>Item Text</label>
+     </div>
+ </div>
 
-    <CheckBoxList TItem="string"
-                  Data="@Fruits"
-                  SelectedValues="@selected"
-                  SelectedValuesChanged="@((v) => selected = v)" />
+ -----------------------------------------------------------------------------
 
-    @code {
-        List<string> Fruits = new() { "Apple", "Banana", "Cherry" };
-        List<string> selected = new();
-    }
+ ## 🎨 Styling
 
----
+ .checkbox-list {
+     display: flex;
+     flex-direction: column;
+     gap: 6px;
+ }
 
-## 📄 License
+ .checkbox-row {
+     display: flex;
+     align-items: center;
+     gap: 8px;
+ }
 
-MIT — free to use, modify, and integrate.
+ -----------------------------------------------------------------------------
+
+ ## 🧪 Example: All Three Bindings
+
+ <CheckBoxList TItem="string"
+               Data="@Fruits"
+               @bind-SelectedValues="SelectedValues"
+               @bind-SelectedTexts="SelectedTexts"
+               @bind-SelectedMap="SelectedMap" />
+
+ @code {
+     List<string> Fruits = new() { "Apple", "Banana", "Cherry" };
+
+     List<string> SelectedValues = new();
+     List<string> SelectedTexts = new();
+     Dictionary<string,int> SelectedMap = new();
+ }
+
+ -----------------------------------------------------------------------------
+
+ ## 📄 License
+
+ MIT — free to use, modify, and integrate.
+
+ -----------------------------------------------------------------------------

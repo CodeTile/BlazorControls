@@ -1,44 +1,107 @@
 ﻿@typeparam TItem
 
-<div class="fui-checklist">
+<div class="checkbox-list">
     @foreach (var item in Data)
     {
-        var text = TextField != null ? TextField(item) : item?.ToString() ?? string.Empty;
-        var value = ValueField != null ? ValueField(item)?.ToString() ?? text : text;
-        var isChecked = SelectedValues.Contains(value);
+        string text = GetText(item);
+        string value = GetValue(item);
 
-        <label>
+        bool isChecked = SelectedValues.Contains(value);
+
+        <div class="checkbox-row">
             <input type="checkbox"
                    checked="@isChecked"
                    @onchange="e => ToggleValue(value, text, e.Value)" />
-            @text
-        </label>
+
+            <label>@text</label>
+        </div>
     }
-
 </div>
-@* 
+
+@*
+    ============================================================
+    HOW TO USE THIS COMPONENT
+    ============================================================
+
     <summary>
-    Renders the checklist items for <see cref="CheckBoxList{TItem}"/>.
+        The CheckBoxList component renders a list of checkboxes from
+        any IEnumerable<TItem> source. It supports three two-way
+        bindings:
 
-    Each item in <see cref="Data"/> is displayed as a checkbox with:
-    - Checked state determined by <see cref="SelectedValues"/>
-    - Display text determined by <see cref="TextField"/> or the item's ToString()
-    - Value determined by <see cref="ValueField"/> or text
+        - @bind-SelectedValues : List<string>
+        - @bind-SelectedTexts  : List<string>
+        - @bind-SelectedMap    : Dictionary<string,int>
 
-    Excluded items (specified in <see cref="ExcludedTexts"/>) are rendered unchecked.
-
-    Example usage:
-    <CheckBoxList TItem="string"
-                  Data="@(new List<string> { "Apple", "Banana", "Cherry" })"
-                  SelectedValues="@SelectedFruits"
-                  SelectedValuesChanged="@(v => SelectedFruits = v)"
-                  SelectedTexts="@SelectedFruitTexts"
-                  SelectedTextsChanged="@(v => SelectedFruitTexts = v)"
-                  ExcludedTexts="@(new List<string> { "Banana" })" />
-
-    Result:
-    - Apple: checked
-    - Banana: unchecked
-    - Cherry: checked
+        You may bind any combination of these depending on your needs.
+        SelectedMap is the most powerful and is recommended for most
+        scenarios.
     </summary>
+
+    ------------------------------------------------------------
+    BASIC USAGE (STRING LIST)
+    ------------------------------------------------------------
+
+        <CheckBoxList Data="ColorList"
+                      @bind-SelectedValues="SelectedColors"
+                      @bind-SelectedTexts="SelectedColorNames"
+                      @bind-SelectedMap="SelectedColorMap" />
+
+    - Data items are used directly as both text and value.
+    - SelectedMap returns keys only (value = 0).
+
+
+    ------------------------------------------------------------
+    OBJECT LIST WITH TEXT + VALUE FIELDS
+    ------------------------------------------------------------
+
+        <CheckBoxList Data="EmployeeList"
+                      TextField="@(e => e.FullName)"
+                      ValueField="@(e => e.EmployeeId.ToString())"
+                      @bind-SelectedValues="SelectedIds"
+                      @bind-SelectedTexts="SelectedNames"
+                      @bind-SelectedMap="SelectedMap" />
+
+    - TextField defines what is shown to the user.
+    - ValueField defines the unique key.
+    - SelectedMap returns key:index (selection order).
+
+
+    ------------------------------------------------------------
+    DICTIONARY SUPPORT (KEY → VALUE)
+    ------------------------------------------------------------
+
+        <CheckBoxList Data="StatusList"
+                      TextField="@(s => s.Key)"
+                      ValueField="@(s => s.Key)"
+                      @bind-SelectedMap="SelectedStatusMap" />
+
+    - When Data is Dictionary<string,int>, SelectedMap returns:
+        key : dictionaryValue
+      Example:
+        "Open":12, "Closed":30
+
+
+    ------------------------------------------------------------
+    UNCHECKEDINITIALLY
+    ------------------------------------------------------------
+
+        <CheckBoxList Data="ColorList"
+                      UncheckedInitially="@(new[] { "Blue" })"
+                      @bind-SelectedMap="SelectedColorMap" />
+
+    - All items start checked except those listed in UncheckedInitially.
+
+
+    ------------------------------------------------------------
+    NOTES
+    ------------------------------------------------------------
+
+    - You may bind only SelectedMap if you do not need values or texts.
+    - The component automatically emits initial selections on first render.
+    - Works with:
+        • string lists
+        • object lists
+        • dictionary lists
+    - SelectedMap is the recommended binding for most real-world scenarios.
+
 *@
