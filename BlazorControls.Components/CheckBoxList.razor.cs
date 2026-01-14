@@ -126,7 +126,7 @@ namespace BlazorControls.Components
 		/// <summary>
 		/// Handles checkbox toggle events.
 		/// </summary>
-		private void ToggleValue(string value, string text, object changed)
+		public void ToggleValue(string value, string text, object changed)
 		{
 			bool isChecked = changed is bool b && b;
 
