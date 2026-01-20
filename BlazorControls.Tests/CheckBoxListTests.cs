@@ -10,11 +10,25 @@ namespace BlazorControls.Components.Tests
 	// ============================================================
 	//  Testable Wrapper for Logic-Only Testing
 	// ============================================================
+
+	/// <summary>
+	/// A specialized test wrapper for <see cref="BlazorControls.Components.CheckBoxList{T}"/>
+	/// that enables logic-only testing without invoking Blazor's rendering pipeline.
+	/// <para>
+	/// This wrapper bypasses UI updates, suppresses <c>StateHasChanged()</c>,
+	/// and exposes internal initialization logic for direct invocation.
+	/// </para>
+	/// </summary>
+	/// <typeparam name="T">The data type used by the checkbox list.</typeparam>
 	public class TestableCheckBoxList<T> : BlazorControls.Components.CheckBoxList<T>
 	{
 		/// <summary>
-		/// Runs only the logic portions of OnAfterRender(true),
-		/// skipping EmitAll() to avoid Blazor rendering.
+		/// Executes the internal initialization logic normally triggered during
+		/// <see cref="ComponentBase.OnAfterRender(bool)"/> without performing any rendering.
+		/// <para>
+		/// Specifically invokes the private <c>InitializeSelections()</c> and <c>BuildMap()</c>
+		/// methods using reflection.
+		/// </para>
 		/// </summary>
 		public void RunInitialization()
 		{
@@ -28,34 +42,55 @@ namespace BlazorControls.Components.Tests
 		}
 
 		/// <summary>
-		/// Suppresses Blazor rendering during tests.
+		/// Overrides Blazor's rendering trigger to prevent UI updates during logic-only tests.
 		/// </summary>
 		protected new void StateHasChanged()
 		{
-			// No-op
+			// Intentionally suppressed for test isolation.
 		}
 
 		/// <summary>
-		/// Suppress EmitAll() during OnAfterRender.
+		/// Overrides <see cref="ComponentBase.OnAfterRender(bool)"/> to prevent
+		/// <c>EmitAll()</c> from firing during tests.
 		/// </summary>
+		/// <param name="firstRender">Indicates whether this is the first render.</param>
 		protected override void OnAfterRender(bool firstRender)
 		{
-			// Skip EmitAll()
+			// Skip EmitAll() to avoid triggering callbacks during test setup.
 		}
 	}
 
 	// ============================================================
 	//  Test Model
 	// ============================================================
+
+	/// <summary>
+	/// A simple model used for object-based checkbox list tests.
+	/// </summary>
 	internal class Fruit
 	{
+		/// <summary>
+		/// The display name of the fruit.
+		/// </summary>
 		public string Name { get; set; } = "";
+
+		/// <summary>
+		/// A short code representing the fruit.
+		/// </summary>
 		public string Code { get; set; } = "";
 	}
 
 	// ============================================================
 	//  MSTest Suite (Logic Only)
 	// ============================================================
+
+	/// <summary>
+	/// A suite of logic-only tests validating initialization behavior,
+	/// mapping rules, and callback invocation for <see cref="CheckBoxList{T}"/>.
+	/// <para>
+	/// These tests bypass Blazor rendering entirely using <see cref="TestableCheckBoxList{T}"/>.
+	/// </para>
+	/// </summary>
 	[TestClass]
 	public class CheckBoxListTests
 	{
@@ -63,6 +98,10 @@ namespace BlazorControls.Components.Tests
 		//  INITIALIZATION TESTS
 		// ---------------------------------------------------------
 
+		/// <summary>
+		/// Ensures that when <c>UncheckedInitially</c> is null,
+		/// all items in <c>Data</c> are selected by default.
+		/// </summary>
 		[TestMethod]
 		public void Initializes_AllItemsSelected_WhenUncheckedInitiallyIsNull()
 		{
@@ -76,10 +115,14 @@ namespace BlazorControls.Components.Tests
 			CollectionAssert.AreEqual(new[] { "A", "B", "C" }, component.SelectedValues);
 			CollectionAssert.AreEqual(new[] { "A", "B", "C" }, component.SelectedTexts);
 
-			Assert.AreEqual(3, component.SelectedMap.Count);
+			Assert.HasCount(3, component.SelectedMap);
 			Assert.IsTrue(component.SelectedMap.Values.All(v => v == 0));
 		}
 
+		/// <summary>
+		/// Ensures that <c>UncheckedInitially</c> correctly excludes items
+		/// from the initial selection set when matching by text.
+		/// </summary>
 		[TestMethod]
 		public void Initializes_RespectsUncheckedInitially_ByText()
 		{
@@ -107,6 +150,10 @@ namespace BlazorControls.Components.Tests
 		//  OBJECT LIST TESTS
 		// ---------------------------------------------------------
 
+		/// <summary>
+		/// Verifies that when using object-based data, the <c>SelectedMap</c>
+		/// stores the positional index of each item as its mapped value.
+		/// </summary>
 		[TestMethod]
 		public void ObjectList_UsesPositionalIndexInMap()
 		{
@@ -140,6 +187,10 @@ namespace BlazorControls.Components.Tests
 		//  DICTIONARY LIST TESTS
 		// ---------------------------------------------------------
 
+		/// <summary>
+		/// Ensures that when binding to a dictionary, the dictionary's values
+		/// are used as the mapped values in <c>SelectedMap</c>.
+		/// </summary>
 		[TestMethod]
 		public void DictionaryList_UsesDictionaryValuesInMap()
 		{
@@ -171,6 +222,10 @@ namespace BlazorControls.Components.Tests
 		//  SELECTEDMAP SETTER TESTS
 		// ---------------------------------------------------------
 
+		/// <summary>
+		/// Verifies that assigning a new dictionary instance to <c>SelectedMap</c>
+		/// triggers the <c>SelectedMapChanged</c> callback.
+		/// </summary>
 		[TestMethod]
 		public void SelectedMap_Setter_InvokesCallback_WhenReferenceChanges()
 		{
@@ -182,7 +237,6 @@ namespace BlazorControls.Components.Tests
 				SelectedMap = new Dictionary<string, int>()
 			};
 
-			// Attach callback AFTER initial state is set
 			component.SelectedMapChanged = EventCallback.Factory.Create<Dictionary<string, int>>(
 				new object(),
 				(Action<Dictionary<string, int>>)(map => received = map)
@@ -194,6 +248,10 @@ namespace BlazorControls.Components.Tests
 			Assert.AreEqual("A", received.Keys.Single());
 		}
 
+		/// <summary>
+		/// Ensures that assigning the same dictionary reference to <c>SelectedMap</c>
+		/// does not trigger the <c>SelectedMapChanged</c> callback.
+		/// </summary>
 		[TestMethod]
 		public void SelectedMap_Setter_DoesNotInvokeCallback_WhenReferenceSame()
 		{
@@ -207,13 +265,11 @@ namespace BlazorControls.Components.Tests
 				SelectedMap = map
 			};
 
-			// Attach callback AFTER initial assignment
 			component.SelectedMapChanged = EventCallback.Factory.Create<Dictionary<string, int>>(
 				new object(),
 				(Action<Dictionary<string, int>>)(_ => fired = true)
 			);
 
-			// Assign same reference again
 			component.SelectedMap = map;
 
 			Assert.IsFalse(fired);

@@ -5,9 +5,21 @@ using BlazorControls.Components;
 
 namespace BlazorControls.Components.Tests
 {
+	/// <summary>
+	/// A suite of logic-focused bUnit tests validating slice generation,
+	/// color resolution, filtering, and computed properties for the
+	/// <see cref="DonutChart"/> component.
+	/// <para>
+	/// These tests operate on the component instance directly rather than
+	/// interacting with rendered DOM elements.
+	/// </para>
+	/// </summary>
 	[TestClass]
 	public class DonutChartGenerateTests : BunitContext
 	{
+		/// <summary>
+		/// Ensures that when <c>Data</c> is null, the chart produces no slices.
+		/// </summary>
 		[TestMethod]
 		public void DataNull_ProducesNoSlices()
 		{
@@ -15,9 +27,13 @@ namespace BlazorControls.Components.Tests
 				.Add(x => x.Data, null)
 			);
 
-			Assert.AreEqual(0, cut.Instance.Slices.Count);
+			Assert.IsEmpty(cut.Instance.Slices);
 		}
 
+		/// <summary>
+		/// Verifies that default colors are applied in a cyclic (round‑robin)
+		/// sequence when more slices exist than colors.
+		/// </summary>
 		[TestMethod]
 		public void DefaultColors_AreAppliedInCyclicOrder()
 		{
@@ -33,6 +49,10 @@ namespace BlazorControls.Components.Tests
 			Assert.AreEqual("#AA", slices.Single(s => s.Label == "C").Color);
 		}
 
+		/// <summary>
+		/// Ensures that explicit status colors override default colors
+		/// when both are provided.
+		/// </summary>
 		[TestMethod]
 		public void DefaultColors_AreIgnoredWhenStatusColorExists()
 		{
@@ -48,6 +68,10 @@ namespace BlazorControls.Components.Tests
 			Assert.AreEqual("#222222", slices.Single(s => s.Label == "B").Color);
 		}
 
+		/// <summary>
+		/// Confirms that when no default colors or status colors are supplied,
+		/// the component generates a stable fallback HSL color.
+		/// </summary>
 		[TestMethod]
 		public void GeneratedColor_IsUsedWhenNoDefaultsOrStatusColors()
 		{
@@ -62,6 +86,10 @@ namespace BlazorControls.Components.Tests
 			StringAssert.StartsWith(color, "hsl(");
 		}
 
+		/// <summary>
+		/// Ensures that <c>IncludeLabels</c> correctly filters the dataset
+		/// before slice generation.
+		/// </summary>
 		[TestMethod]
 		public void IncludeLabels_FiltersDataCorrectly()
 		{
@@ -75,6 +103,10 @@ namespace BlazorControls.Components.Tests
 			CollectionAssert.AreEquivalent(new[] { "A", "C" }, labels);
 		}
 
+		/// <summary>
+		/// Verifies that the inner radius is always zero when the chart
+		/// is configured as a pie (IsDonut = false).
+		/// </summary>
 		[TestMethod]
 		public void InnerRadius_IsZeroWhenNotDonut()
 		{
@@ -86,6 +118,10 @@ namespace BlazorControls.Components.Tests
 			Assert.AreEqual(0, cut.Instance.InnerRadius);
 		}
 
+		/// <summary>
+		/// Ensures that excessively large thickness values do not produce
+		/// negative inner radii and instead clamp to zero.
+		/// </summary>
 		[TestMethod]
 		public void InnerRadius_IsZeroWhenThicknessTooLarge()
 		{
@@ -97,6 +133,10 @@ namespace BlazorControls.Components.Tests
 			Assert.AreEqual(0, cut.Instance.InnerRadius);
 		}
 
+		/// <summary>
+		/// Confirms that the inner radius is computed as
+		/// <c>90 - Thickness</c> when in donut mode.
+		/// </summary>
 		[TestMethod]
 		public void InnerRadius_UsesThicknessCorrectly()
 		{
@@ -108,6 +148,10 @@ namespace BlazorControls.Components.Tests
 			Assert.AreEqual(70, cut.Instance.InnerRadius);
 		}
 
+		/// <summary>
+		/// Ensures that explicit status colors override default colors
+		/// when both are provided.
+		/// </summary>
 		[TestMethod]
 		public void StatusColors_OverrideDefaults()
 		{
@@ -120,6 +164,10 @@ namespace BlazorControls.Components.Tests
 			Assert.AreEqual("#ABCDEF", cut.Instance.Slices.Single().Color);
 		}
 
+		/// <summary>
+		/// Verifies that <c>TotalValue</c> correctly sums the values
+		/// of all generated slices.
+		/// </summary>
 		[TestMethod]
 		public void TotalValue_ComputesSumCorrectly()
 		{
@@ -130,6 +178,9 @@ namespace BlazorControls.Components.Tests
 			Assert.AreEqual(20, cut.Instance.TotalValue);
 		}
 
+		/// <summary>
+		/// Ensures that zero or negative values are excluded from slice generation.
+		/// </summary>
 		[TestMethod]
 		public void ZeroOrNegativeValues_AreIgnored()
 		{
@@ -139,10 +190,13 @@ namespace BlazorControls.Components.Tests
 
 			var slices = cut.Instance.Slices;
 
-			Assert.AreEqual(1, slices.Count);
+			Assert.HasCount(1, slices);
 			Assert.AreEqual("C", slices[0].Label);
 		}
 
+		/// <summary>
+		/// Confirms that when all values are zero, the chart produces no slices.
+		/// </summary>
 		[TestMethod]
 		public void ZeroTotal_ProducesNoSlices()
 		{
@@ -150,7 +204,7 @@ namespace BlazorControls.Components.Tests
 				.Add(x => x.Data, new() { { "A", 0 }, { "B", 0 } })
 			);
 
-			Assert.AreEqual(0, cut.Instance.Slices.Count);
+			Assert.IsEmpty(cut.Instance.Slices);
 		}
 	}
 }

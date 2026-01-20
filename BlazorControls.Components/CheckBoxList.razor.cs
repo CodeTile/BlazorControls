@@ -19,22 +19,22 @@ namespace BlazorControls.Components
 		/// <summary>
 		/// The data source for the checkbox list.
 		/// </summary>
-		[Parameter] public IEnumerable<TItem> Data { get; set; } = Enumerable.Empty<TItem>();
+		[Parameter] public IEnumerable<TItem> Data { get; set; } = [];
 
 		/// <summary>
 		/// Function to extract display text from an item.
 		/// </summary>
-		[Parameter] public Func<TItem, string>? TextField { get; set; }
+		[Parameter] public Func<TItem, string> TextField { get; set; }
 
 		/// <summary>
 		/// Function to extract value from an item.
 		/// </summary>
-		[Parameter] public Func<TItem, string>? ValueField { get; set; }
+		[Parameter] public Func<TItem, string> ValueField { get; set; }
 
 		/// <summary>
 		/// The list of selected values.
 		/// </summary>
-		[Parameter] public List<string> SelectedValues { get; set; } = new();
+		[Parameter] public List<string> SelectedValues { get; set; } = [];
 
 		/// <summary>
 		/// Raised when SelectedValues changes.
@@ -44,14 +44,14 @@ namespace BlazorControls.Components
 		/// <summary>
 		/// The list of selected display texts.
 		/// </summary>
-		[Parameter] public List<string> SelectedTexts { get; set; } = new();
+		[Parameter] public List<string> SelectedTexts { get; set; } = [];
 
 		/// <summary>
 		/// Raised when SelectedTexts changes.
 		/// </summary>
 		[Parameter] public EventCallback<List<string>> SelectedTextsChanged { get; set; }
 
-		private Dictionary<string, int> _selectedMap = new();
+		private Dictionary<string, int> _selectedMap = [];
 
 		/// <summary>
 		/// Two-way bound map of selected items.
@@ -66,7 +66,7 @@ namespace BlazorControls.Components
 			{
 				if (!ReferenceEquals(_selectedMap, value))
 				{
-					_selectedMap = value ?? new();
+					_selectedMap = value ?? [];
 					SelectedMapChanged.InvokeAsync(_selectedMap);
 				}
 			}
@@ -80,7 +80,7 @@ namespace BlazorControls.Components
 		/// <summary>
 		/// Items listed here will start unchecked.
 		/// </summary>
-		[Parameter] public IEnumerable<string>? UncheckedInitially { get; set; }
+		[Parameter] public IEnumerable<string> UncheckedInitially { get; set; }
 
 		private bool _initialized = false;
 

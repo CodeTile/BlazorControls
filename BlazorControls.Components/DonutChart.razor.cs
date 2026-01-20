@@ -16,12 +16,12 @@ public partial class DonutChart : ComponentBase
 	/// <summary>
 	/// Optional title displayed above the chart.
 	/// </summary>
-	[Parameter] public string? Title { get; set; }
+	[Parameter] public string Title { get; set; }
 
 	/// <summary>
 	/// Optional text displayed inside the donut hole when <see cref="IsDonut"/> is true.
 	/// </summary>
-	[Parameter] public string? InnerTitle { get; set; }
+	[Parameter] public string InnerTitle { get; set; }
 
 	/// <summary>
 	/// Determines whether the chart renders as a donut (true) or a pie chart (false).
@@ -39,25 +39,25 @@ public partial class DonutChart : ComponentBase
 	/// The primary data source for the chart.
 	/// Keys represent labels; values represent numeric quantities.
 	/// </summary>
-	[Parameter] public Dictionary<string, int>? Data { get; set; }
+	[Parameter] public Dictionary<string, int> Data { get; set; }
 
 	/// <summary>
 	/// Optional list of labels to include.
 	/// Any labels not in this list are excluded from rendering.
 	/// </summary>
-	[Parameter] public IEnumerable<string>? IncludeLabels { get; set; }
+	[Parameter] public IEnumerable<string> IncludeLabels { get; set; }
 
 	/// <summary>
 	/// Explicit colour overrides for specific labels.
 	/// If a label exists in this dictionary, its colour is used.
 	/// </summary>
-	[Parameter] public Dictionary<string, string>? StatusColors { get; set; }
+	[Parameter] public Dictionary<string, string> StatusColors { get; set; }
 
 	/// <summary>
 	/// A list of default colours used when no explicit colour is provided.
 	/// Colours cycle in order for each slice.
 	/// </summary>
-	[Parameter] public List<string>? DefaultColors { get; set; }
+	[Parameter] public List<string> DefaultColors { get; set; }
 
 	/// <summary>
 	/// Event fired when a slice is clicked.

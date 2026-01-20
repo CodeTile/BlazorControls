@@ -1,25 +1,32 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-using Bunit;
+﻿using Bunit;
 
 using Microsoft.AspNetCore.Components;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace BlazorControls.Components.Tests
 {
+	/// <summary>
+	/// bUnit test suite validating initialization behavior, toggle logic,
+	/// and callback invocation for the <see cref="CheckBoxList{T}"/> component.
+	/// </summary>
 	[TestClass]
 	public class CheckBoxListBunitTests
 	{
 		private BunitContext _ctx = null!;
 
+		/// <summary>
+		/// Creates a fresh <see cref="BunitContext"/> before each test,
+		/// ensuring a clean rendering environment.
+		/// </summary>
 		[TestInitialize]
 		public void Setup()
 		{
 			_ctx = new BunitContext();
 		}
 
+		/// <summary>
+		/// Disposes the <see cref="BunitContext"/> after each test
+		/// to release component instances and DOM resources.
+		/// </summary>
 		[TestCleanup]
 		public void Teardown()
 		{
@@ -30,6 +37,10 @@ namespace BlazorControls.Components.Tests
 		//  INITIALIZATION CALLBACK TEST
 		// ---------------------------------------------------------
 
+		/// <summary>
+		/// Verifies that the component fires both SelectedValuesChanged
+		/// and SelectedTextsChanged during the initial render cycle.
+		/// </summary>
 		[TestMethod]
 		public void Initialization_Fires_SelectedValuesChanged_And_SelectedTextsChanged()
 		{
@@ -55,6 +66,10 @@ namespace BlazorControls.Components.Tests
 		//  TOGGLE TESTS (FULL PIPELINE)
 		// ---------------------------------------------------------
 
+		/// <summary>
+		/// Ensures that checking a value adds it to SelectedValues,
+		/// updates SelectedTexts, and inserts the correct index into SelectedMap.
+		/// </summary>
 		[TestMethod]
 		public void ToggleValue_Check_AddsToSelections_AndUpdatesMap()
 		{
@@ -68,16 +83,20 @@ namespace BlazorControls.Components.Tests
 			// MUST run on dispatcher
 			comp.InvokeAsync(() => comp.Instance.ToggleValue("A", "A", true));
 
-			Assert.AreEqual(1, comp.Instance.SelectedValues.Count);
+			Assert.HasCount(1, comp.Instance.SelectedValues);
 			Assert.AreEqual("A", comp.Instance.SelectedValues.Single());
 
-			Assert.AreEqual(1, comp.Instance.SelectedTexts.Count);
+			Assert.HasCount(1, comp.Instance.SelectedTexts);
 			Assert.AreEqual("A", comp.Instance.SelectedTexts.Single());
 
-			Assert.AreEqual(1, comp.Instance.SelectedMap.Count);
+			Assert.HasCount(1, comp.Instance.SelectedMap);
 			Assert.AreEqual(0, comp.Instance.SelectedMap["A"]);
 		}
 
+		/// <summary>
+		/// Ensures that unchecking a value removes it from all selection
+		/// collections and clears its entry from SelectedMap.
+		/// </summary>
 		[TestMethod]
 		public void ToggleValue_Uncheck_RemovesFromSelections()
 		{
@@ -88,20 +107,24 @@ namespace BlazorControls.Components.Tests
 			comp.Render();
 
 			// Initially selected
-			Assert.AreEqual(1, comp.Instance.SelectedValues.Count);
+			Assert.HasCount(1, comp.Instance.SelectedValues);
 
 			// MUST run on dispatcher AND be awaited
 			comp.InvokeAsync(() => comp.Instance.ToggleValue("A", "A", false)).Wait();
 
-			Assert.AreEqual(0, comp.Instance.SelectedValues.Count);
-			Assert.AreEqual(0, comp.Instance.SelectedTexts.Count);
-			Assert.AreEqual(0, comp.Instance.SelectedMap.Count);
+			Assert.IsEmpty(comp.Instance.SelectedValues);
+			Assert.IsEmpty(comp.Instance.SelectedTexts);
+			Assert.IsEmpty(comp.Instance.SelectedMap);
 		}
 
 		// ---------------------------------------------------------
 		//  CALLBACK TESTS FOR TOGGLE
 		// ---------------------------------------------------------
 
+		/// <summary>
+		/// Verifies that toggling a value fires both SelectedValuesChanged
+		/// and SelectedTextsChanged with the updated selection lists.
+		/// </summary>
 		[TestMethod]
 		public void ToggleValue_FiresCallbacks()
 		{
@@ -124,8 +147,8 @@ namespace BlazorControls.Components.Tests
 			Assert.IsNotNull(receivedValues);
 			Assert.IsNotNull(receivedTexts);
 
-			Assert.AreEqual(0, receivedValues!.Count);
-			Assert.AreEqual(0, receivedTexts!.Count);
+			Assert.IsEmpty(receivedValues);
+			Assert.IsEmpty(receivedTexts);
 		}
 	}
 }

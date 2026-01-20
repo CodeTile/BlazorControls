@@ -17,7 +17,7 @@ public partial class Charts : ComponentBase, IDisposable
 		["West"] = 60
 	};
 
-	private List<string> AllSalesLabels => SalesData.Keys.ToList();
+	private List<string> AllSalesLabels => [.. SalesData.Keys];
 	private IEnumerable<string>? CurrentSalesLabels;
 
 	// -----------------------------
@@ -30,7 +30,7 @@ public partial class Charts : ComponentBase, IDisposable
 		["Blocked"] = 5
 	};
 
-	private List<string> AllTaskLabels => TaskData.Keys.ToList();
+	private List<string> AllTaskLabels => [.. TaskData.Keys];
 	private IEnumerable<string>? CurrentTaskLabels;
 
 	// -----------------------------
