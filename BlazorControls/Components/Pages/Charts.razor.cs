@@ -80,9 +80,9 @@ public partial class Charts : ComponentBase, IDisposable
 		InvokeAsync(StateHasChanged);
 	}
 
-	private void HandleSliceClick(string label)
+	private void HandleSliceClick(ChartClickEventArgs e)
 	{
-		Console.WriteLine($"[Home] Slice clicked: {label}");
+		Console.WriteLine($"[Home] Slice clicked: {e.SliceLabel}");
 		Nav.NavigateTo("/counter");
 	}
 

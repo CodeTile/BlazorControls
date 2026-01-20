@@ -96,13 +96,13 @@
         // based on UncheckedInitially
     }
 
-    private void HandleSliceClick(string label)
+    private void HandleSliceClick(ChartClickEventArgs e)
     {
-        Console.WriteLine($"[Home] Slice clicked: {label}");
+        Console.WriteLine($"[Home] Slice clicked: {e.SliceLabel}");
         Nav.NavigateTo("/counter");
     }
 
-    private void HandleCenterClick()
+    private void HandleCenterClick(ChartClickEventArgs e)
     {
         Console.WriteLine("[Home] Center clicked");
         Nav.NavigateTo("/weather");

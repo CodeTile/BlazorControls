@@ -63,13 +63,13 @@ public partial class DonutChart : ComponentBase
 	/// Event fired when a slice is clicked.
 	/// The slice label is passed as the event argument.
 	/// </summary>
-	[Parameter] public EventCallback<string> OnSliceClick { get; set; }
+	[Parameter] public EventCallback<ChartClickEventArgs> OnSliceClick { get; set; }
 
 	/// <summary>
 	/// Event fired when the donut center is clicked.
 	/// Only applies when <see cref="IsDonut"/> is true.
 	/// </summary>
-	[Parameter] public EventCallback OnCenterClick { get; set; }
+	[Parameter] public EventCallback<ChartClickEventArgs> OnCenterClick { get; set; }
 
 	/// <summary>
 	/// Determines whether a legend is rendered below the chart.
@@ -190,7 +190,7 @@ public partial class DonutChart : ComponentBase
 
 	private async Task OnSliceClickAsync(DonutSlice slice)
 	{
-		await OnSliceClick.InvokeAsync(slice.Label);
+		await OnSliceClick.InvokeAsync(new ChartClickEventArgs() { SliceLabel = slice.Label });
 	}
 
 	private void OnSliceHover(DonutSlice slice)
@@ -214,6 +214,6 @@ public partial class DonutChart : ComponentBase
 
 	private async Task OnCenterClickAsync()
 	{
-		await OnCenterClick.InvokeAsync();
+		await OnCenterClick.InvokeAsync(new ChartClickEventArgs() { SliceLabel = InnerTitle });
 	}
 }
