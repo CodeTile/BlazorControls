@@ -1,154 +1,172 @@
 ﻿using Bunit;
-
 using Microsoft.AspNetCore.Components;
+using BlazorControls.Components;
+using Shouldly;
+using Xunit;
 
-namespace BlazorControls.Components.Tests
+namespace BlazorControls.Tests
 {
 	/// <summary>
-	/// bUnit test suite validating initialization behavior, toggle logic,
-	/// and callback invocation for the <see cref="CheckBoxList{T}"/> component.
+	/// Provides bUnit rendering tests for the <see cref="CheckBoxList{TItem}"/> component.
+	/// These tests validate rendering behaviour, interaction handling, and optional action buttons.
 	/// </summary>
-	[TestClass]
-	public class CheckBoxListBunitTests
+	public class CheckBoxListBunitTests : BunitContext
 	{
-		private BunitContext _ctx = null!;
-
 		/// <summary>
-		/// Creates a fresh <see cref="BunitContext"/> before each test,
-		/// ensuring a clean rendering environment.
+		/// Ensures that the component renders one checkbox for each supplied item.
 		/// </summary>
-		[TestInitialize]
-		public void Setup()
+		[Fact]
+		public void Renders_All_Items()
 		{
-			_ctx = new BunitContext();
-		}
+			var items = new[] { "A", "B", "C" };
 
-		/// <summary>
-		/// Disposes the <see cref="BunitContext"/> after each test
-		/// to release component instances and DOM resources.
-		/// </summary>
-		[TestCleanup]
-		public void Teardown()
-		{
-			_ctx.Dispose();
-		}
-
-		// ---------------------------------------------------------
-		//  INITIALIZATION CALLBACK TEST
-		// ---------------------------------------------------------
-
-		/// <summary>
-		/// Verifies that the component fires both SelectedValuesChanged
-		/// and SelectedTextsChanged during the initial render cycle.
-		/// </summary>
-		[TestMethod]
-		public void Initialization_Fires_SelectedValuesChanged_And_SelectedTextsChanged()
-		{
-			bool valuesFired = false;
-			bool textsFired = false;
-
-			var comp = _ctx.Render<CheckBoxList<string>>(parameters => parameters
-				.Add(p => p.Data, new[] { "A" })
-				.Add(p => p.SelectedValuesChanged, EventCallback.Factory.Create<List<string>>(
-					new object(), (Action<List<string>>)(_ => valuesFired = true)))
-				.Add(p => p.SelectedTextsChanged, EventCallback.Factory.Create<List<string>>(
-					new object(), (Action<List<string>>)(_ => textsFired = true)))
+			var cut = Render<CheckBoxList<string>>(parameters => parameters
+				.Add(p => p.Items, items)
+				.Add(p => p.KeySelector, x => x)
+				.Add(p => p.LabelSelector, x => x)
 			);
 
-			// Trigger first render
-			comp.Render();
-
-			Assert.IsTrue(valuesFired);
-			Assert.IsTrue(textsFired);
-		}
-
-		// ---------------------------------------------------------
-		//  TOGGLE TESTS (FULL PIPELINE)
-		// ---------------------------------------------------------
-
-		/// <summary>
-		/// Ensures that checking a value adds it to SelectedValues,
-		/// updates SelectedTexts, and inserts the correct index into SelectedMap.
-		/// </summary>
-		[TestMethod]
-		public void ToggleValue_Check_AddsToSelections_AndUpdatesMap()
-		{
-			var comp = _ctx.Render<CheckBoxList<string>>(parameters => parameters
-				.Add(p => p.Data, new[] { "A", "B" })
-				.Add(p => p.UncheckedInitially, new[] { "A", "B" })
-			);
-
-			comp.Render();
-
-			// MUST run on dispatcher
-			comp.InvokeAsync(() => comp.Instance.ToggleValue("A", "A", true));
-
-			Assert.HasCount(1, comp.Instance.SelectedValues);
-			Assert.AreEqual("A", comp.Instance.SelectedValues.Single());
-
-			Assert.HasCount(1, comp.Instance.SelectedTexts);
-			Assert.AreEqual("A", comp.Instance.SelectedTexts.Single());
-
-			Assert.HasCount(1, comp.Instance.SelectedMap);
-			Assert.AreEqual(0, comp.Instance.SelectedMap["A"]);
+			var checkboxes = cut.FindAll("input[type=checkbox]");
+			checkboxes.Count.ShouldBe(3);
 		}
 
 		/// <summary>
-		/// Ensures that unchecking a value removes it from all selection
-		/// collections and clears its entry from SelectedMap.
+		/// Ensures that the component renders the expected text labels for each item.
 		/// </summary>
-		[TestMethod]
-		public void ToggleValue_Uncheck_RemovesFromSelections()
+		[Fact]
+		public void Renders_Labels()
 		{
-			var comp = _ctx.Render<CheckBoxList<string>>(parameters => parameters
-				.Add(p => p.Data, new[] { "A" })
+			var items = new[] { "Red", "Green", "Blue" };
+
+			var cut = Render<CheckBoxList<string>>(parameters => parameters
+				.Add(p => p.Items, items)
+				.Add(p => p.KeySelector, x => x)
+				.Add(p => p.LabelSelector, x => x)
 			);
 
-			comp.Render();
-
-			// Initially selected
-			Assert.HasCount(1, comp.Instance.SelectedValues);
-
-			// MUST run on dispatcher AND be awaited
-			comp.InvokeAsync(() => comp.Instance.ToggleValue("A", "A", false)).Wait();
-
-			Assert.IsEmpty(comp.Instance.SelectedValues);
-			Assert.IsEmpty(comp.Instance.SelectedTexts);
-			Assert.IsEmpty(comp.Instance.SelectedMap);
+			cut.Markup.ShouldContain("Red");
+			cut.Markup.ShouldContain("Green");
+			cut.Markup.ShouldContain("Blue");
 		}
 
-		// ---------------------------------------------------------
-		//  CALLBACK TESTS FOR TOGGLE
-		// ---------------------------------------------------------
-
 		/// <summary>
-		/// Verifies that toggling a value fires both SelectedValuesChanged
-		/// and SelectedTextsChanged with the updated selection lists.
+		/// Verifies that the <see cref="CheckBoxList{TItem}.CheckedSelector"/> delegate
+		/// correctly determines the initial checked state of each checkbox.
 		/// </summary>
-		[TestMethod]
-		public void ToggleValue_FiresCallbacks()
+		[Fact]
+		public void CheckedSelector_Sets_Initial_State()
 		{
-			List<string>? receivedValues = null;
-			List<string>? receivedTexts = null;
+			var items = new[] { "A", "B", "C" };
 
-			var comp = _ctx.Render<CheckBoxList<string>>(parameters => parameters
-				.Add(p => p.Data, new[] { "A" })
-				.Add(p => p.SelectedValuesChanged, EventCallback.Factory.Create<List<string>>(
-					new object(), (Action<List<string>>)(v => receivedValues = v)))
-				.Add(p => p.SelectedTextsChanged, EventCallback.Factory.Create<List<string>>(
-					new object(), (Action<List<string>>)(t => receivedTexts = t)))
+			var cut = Render<CheckBoxList<string>>(parameters => parameters
+				.Add(p => p.Items, items)
+				.Add(p => p.KeySelector, x => x)
+				.Add(p => p.LabelSelector, x => x)
+				.Add(p => p.CheckedSelector, x => x == "B")
 			);
 
-			comp.Render();
+			var checkboxes = cut.FindAll("input[type=checkbox]");
 
-			// MUST run on dispatcher AND be awaited
-			comp.InvokeAsync(() => comp.Instance.ToggleValue("A", "A", false)).Wait();
+			checkboxes[0].HasAttribute("checked").ShouldBeFalse();
+			checkboxes[1].HasAttribute("checked").ShouldBeTrue();
+			checkboxes[2].HasAttribute("checked").ShouldBeFalse();
+		}
 
-			Assert.IsNotNull(receivedValues);
-			Assert.IsNotNull(receivedTexts);
+		/// <summary>
+		/// Ensures that toggling a checkbox triggers the <see cref="CheckBoxList{TItem}.OnChanged"/>
+		/// callback with the correct key and checked state.
+		/// </summary>
+		[Fact]
+		public void Clicking_Checkbox_Fires_OnChanged()
+		{
+			var items = new[] { "A" };
+			(string Key, bool IsChecked) received = default;
 
-			Assert.IsEmpty(receivedValues);
-			Assert.IsEmpty(receivedTexts);
+			var cut = Render<CheckBoxList<string>>(parameters => parameters
+				.Add(p => p.Items, items)
+				.Add(p => p.KeySelector, x => x)
+				.Add(p => p.LabelSelector, x => x)
+				.Add(p => p.OnChanged, tuple => received = tuple)
+			);
+
+			var checkbox = cut.Find("input[type=checkbox]");
+			checkbox.Change(true);
+
+			received.Key.ShouldBe("A");
+			received.IsChecked.ShouldBeTrue();
+		}
+
+		/// <summary>
+		/// Ensures that the optional "Select All" button triggers its associated callback.
+		/// </summary>
+		[Fact]
+		public void SelectAll_Button_Fires_Event()
+		{
+			bool called = false;
+
+			var cut = Render<CheckBoxList<string>>(parameters => parameters
+				.Add(p => p.Items, new[] { "A", "B" })
+				.Add(p => p.KeySelector, x => x)
+				.Add(p => p.LabelSelector, x => x)
+				.Add(p => p.SelectAll, EventCallback.Factory.Create(this, () => called = true))
+			);
+
+			cut.Find("button").Click();
+
+			called.ShouldBeTrue();
+		}
+
+		/// <summary>
+		/// Ensures that the optional "Clear All" button triggers its associated callback.
+		/// </summary>
+		[Fact]
+		public void ClearAll_Button_Fires_Event()
+		{
+			bool called = false;
+
+			var cut = Render<CheckBoxList<string>>(parameters => parameters
+				.Add(p => p.Items, new[] { "A", "B" })
+				.Add(p => p.KeySelector, x => x)
+				.Add(p => p.LabelSelector, x => x)
+				.Add(p => p.ClearAll, EventCallback.Factory.Create(this, () => called = true))
+			);
+
+			cut.Find("button").Click();
+
+			called.ShouldBeTrue();
+		}
+
+		/// <summary>
+		/// Ensures that both action buttons are rendered when both delegates are supplied.
+		/// </summary>
+		[Fact]
+		public void Renders_Both_Action_Buttons()
+		{
+			var cut = Render<CheckBoxList<string>>(parameters => parameters
+				.Add(p => p.Items, new[] { "A" })
+				.Add(p => p.KeySelector, x => x)
+				.Add(p => p.LabelSelector, x => x)
+				.Add(p => p.SelectAll, EventCallback.Factory.Create(this, () => { }))
+				.Add(p => p.ClearAll, EventCallback.Factory.Create(this, () => { }))
+			);
+
+			var buttons = cut.FindAll("button");
+			buttons.Count.ShouldBe(2);
+		}
+
+		/// <summary>
+		/// Ensures that no action buttons are rendered when no delegates are supplied.
+		/// </summary>
+		[Fact]
+		public void No_Action_Buttons_When_No_Delegates()
+		{
+			var cut = Render<CheckBoxList<string>>(parameters => parameters
+				.Add(p => p.Items, new[] { "A" })
+				.Add(p => p.KeySelector, x => x)
+				.Add(p => p.LabelSelector, x => x)
+			);
+
+			cut.FindAll("button").Count.ShouldBe(0);
 		}
 	}
 }

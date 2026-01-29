@@ -1,5 +1,6 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using BlazorControls.Components;
+﻿using BlazorControls.Components;
+
+using Shouldly;
 
 namespace BlazorControls.Components.Tests
 {
@@ -9,107 +10,106 @@ namespace BlazorControls.Components.Tests
 	/// construction of inner/outer arcs, pie vs donut behavior, and
 	/// full‑circle rendering logic.
 	/// </summary>
-	[TestClass]
 	public class DonutChartGeometryTests
 	{
 		/// <summary>
 		/// Ensures that donut slices include both the outer arc
 		/// (radius = outer radius) and the inner arc (radius = inner radius).
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void DonutPath_ContainsInnerAndOuterArcs()
 		{
 			var slice = new DonutSlice("Donut", 50, 0, 90, 90, 70, "#0000FF");
 			var path = slice.PathData;
 
-			Assert.Contains("A 90 90", path);
-			Assert.Contains("A 70 70", path);
+			path.ShouldContain("A 90 90");
+			path.ShouldContain("A 70 70");
 		}
 
 		/// <summary>
 		/// Verifies that donut slices do not begin at the chart center,
 		/// which would indicate incorrect path construction.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void DonutPath_DoesNotStartAtCenter()
 		{
 			var slice = new DonutSlice("Donut", 10, 0, 60, 90, 70, "#123456");
-			Assert.DoesNotStartWith("M 100 100", slice.PathData);
+			slice.PathData.ShouldNotStartWith("M 100 100");
 		}
 
 		/// <summary>
 		/// Confirms that a full‑circle donut slice uses two outer arcs
 		/// and two inner arcs to complete the shape.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void FullCircleDonut_UsesTwoInnerAndTwoOuterArcs()
 		{
 			var slice = new DonutSlice("Full", 100, 0, 360, 90, 70, "#654321");
 			var path = slice.PathData;
 
-			Assert.AreEqual(2, path.Split("A 90 90").Length - 1);
-			Assert.AreEqual(2, path.Split("A 70 70").Length - 1);
+			(path.Split("A 90 90").Length - 1).ShouldBe(2);
+			(path.Split("A 70 70").Length - 1).ShouldBe(2);
 		}
 
 		/// <summary>
 		/// Ensures that a full‑circle pie slice (inner radius = 0)
 		/// uses exactly two outer arcs to complete the circle.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void FullCirclePie_UsesTwoOuterArcs()
 		{
 			var slice = new DonutSlice("FullPie", 100, 0, 360, 90, 0, "#123456");
-			Assert.AreEqual(2, slice.PathData.Split("A 90 90").Length - 1);
+			(slice.PathData.Split("A 90 90").Length - 1).ShouldBe(2);
 		}
 
 		/// <summary>
 		/// Verifies that pie slices include only the outer arc and begin
 		/// at the chart center.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void PiePath_ContainsOuterArcOnly()
 		{
 			var slice = new DonutSlice("Pie", 50, 0, 90, 90, 0, "#00FF00");
 			var path = slice.PathData;
 
-			StringAssert.StartsWith(path, "M 100 100");
-			Assert.Contains("A 90 90", path);
+			path.ShouldStartWith("M 100 100");
+			path.ShouldContain("A 90 90");
 		}
 
 		/// <summary>
 		/// Ensures that pie slices do not contain inner arcs,
 		/// since their inner radius is zero.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void PiePath_DoesNotContainInnerArc()
 		{
 			var slice = new DonutSlice("Pie", 25, 0, 120, 90, 0, "#EEEEEE");
-			Assert.DoesNotContain("A 70 70", slice.PathData);
+			slice.PathData.ShouldNotContain("A 70 70");
 		}
 
 		/// <summary>
 		/// Confirms that a slice always produces a non‑empty SVG path string.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void Slice_HasNonEmptyPath()
 		{
 			var slice = new DonutSlice("Basic", 10, 0, 45, 90, 70, "#FF0000");
-			Assert.IsFalse(string.IsNullOrWhiteSpace(slice.PathData));
+			slice.PathData.ShouldNotBeNullOrWhiteSpace(slice.PathData);
 		}
 
 		/// <summary>
 		/// Validates that the slice constructor correctly assigns
 		/// label, value, color, and CSS class properties.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void Slice_SetsBasicProperties()
 		{
 			var slice = new DonutSlice("Test", 10, 0, 90, 90, 70, "#FF0000");
 
-			Assert.AreEqual("Test", slice.Label);
-			Assert.AreEqual(10, slice.Value);
-			Assert.AreEqual("#FF0000", slice.Color);
-			Assert.AreEqual("donut-slice", slice.CssClass);
+			slice.Label.ShouldBe("Test");
+			slice.Value.ShouldBe(10);
+			slice.Color.ShouldBe("#FF0000");
+			slice.CssClass.ShouldBe("donut-slice");
 		}
 	}
 }

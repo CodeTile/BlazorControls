@@ -1,23 +1,24 @@
 ﻿using System.Collections.Generic;
 using Bunit;
 using Microsoft.AspNetCore.Components;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using BlazorControls.Components;
+using Shouldly;
+using Xunit;
 
 namespace BlazorControls.Components.Tests
 {
 	/// <summary>
-	/// Tests validating rendering, DOM structure, interactivity,
-	/// tooltips, legends, and event callbacks using bUnit.
+	/// Provides bUnit rendering tests for the <see cref="DonutChart"/> component.
+	/// These tests validate DOM structure, interactivity, tooltips, legends,
+	/// and event callback behaviour.
 	/// </summary>
-	[TestClass]
 	public class DonutChartBunitTests : BunitContext
 	{
 		/// <summary>
-		/// Verifies that clicking the donut center triggers the OnCenterClick callback
-		/// and that the emitted ChartClickEventArgs contains the expected SliceLabel.
+		/// Verifies that clicking the donut centre triggers the <see cref="DonutChart.OnCenterClick"/>
+		/// callback and that the emitted <see cref="ChartClickEventArgs"/> contains the expected label.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void CenterClick_InvokesCallback()
 		{
 			ChartClickEventArgs? received = null;
@@ -32,15 +33,15 @@ namespace BlazorControls.Components.Tests
 
 			cut.Find("g.donut-center").Click();
 
-			Assert.IsNotNull(received);
-			Assert.AreEqual("Center", received!.SliceLabel);
+			received.ShouldNotBeNull();
+			received!.SliceLabel.ShouldBe("Center");
 		}
 
 		/// <summary>
-		/// Ensures that hovering over the donut center displays a tooltip
-		/// showing the inner title and the total aggregated value.
+		/// Ensures that hovering over the donut centre displays a tooltip
+		/// showing the inner title and the aggregated total value.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void CenterHover_ShowsTotalTooltip()
 		{
 			var cut = Render<DonutChart>(p => p
@@ -52,15 +53,15 @@ namespace BlazorControls.Components.Tests
 			cut.Find("g.donut-center").MouseOver();
 
 			var tooltip = cut.Find("div.donut-tooltip");
-			Assert.Contains("Total", tooltip.TextContent);
-			Assert.Contains("30", tooltip.TextContent);
+			tooltip.TextContent.ShouldContain("Total");
+			tooltip.TextContent.ShouldContain("30");
 		}
 
 		/// <summary>
-		/// Confirms that the donut center element is not rendered when the chart
-		/// is configured as a pie chart (IsDonut = false).
+		/// Confirms that the donut centre element is not rendered when the chart
+		/// is configured as a pie chart (<c>IsDonut = false</c>).
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void InnerCircle_IsNotRendered_WhenPie()
 		{
 			var cut = Render<DonutChart>(p => p
@@ -68,13 +69,13 @@ namespace BlazorControls.Components.Tests
 				.Add(x => x.IsDonut, false)
 			);
 
-			Assert.IsEmpty(cut.FindAll("g.donut-center"));
+			cut.FindAll("g.donut-center").Count.ShouldBe(0);
 		}
 
 		/// <summary>
-		/// Confirms that the donut center element is rendered when IsDonut = true.
+		/// Confirms that the donut centre element is rendered when <c>IsDonut = true</c>.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void InnerCircle_IsRendered_WhenDonut()
 		{
 			var cut = Render<DonutChart>(p => p
@@ -82,13 +83,13 @@ namespace BlazorControls.Components.Tests
 				.Add(x => x.IsDonut, true)
 			);
 
-			Assert.HasCount(1, cut.FindAll("g.donut-center"));
+			cut.FindAll("g.donut-center").Count.ShouldBe(1);
 		}
 
 		/// <summary>
-		/// Verifies that the inner title text is rendered when provided.
+		/// Verifies that the inner title text is rendered when supplied.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void InnerTitle_IsRendered()
 		{
 			var cut = Render<DonutChart>(p => p
@@ -97,13 +98,13 @@ namespace BlazorControls.Components.Tests
 				.Add(x => x.InnerTitle, "Inner")
 			);
 
-			Assert.HasCount(1, cut.FindAll(".donut-inner-title"));
+			cut.FindAll(".donut-inner-title").Count.ShouldBe(1);
 		}
 
 		/// <summary>
-		/// Ensures that the legend is not rendered when ShowLegend = false.
+		/// Ensures that the legend is not rendered when <c>ShowLegend = false</c>.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void Legend_IsNotRendered_WhenDisabled()
 		{
 			var cut = Render<DonutChart>(p => p
@@ -111,14 +112,14 @@ namespace BlazorControls.Components.Tests
 				.Add(x => x.ShowLegend, false)
 			);
 
-			Assert.IsEmpty(cut.FindAll("ul.donut-legend"));
+			cut.FindAll("ul.donut-legend").Count.ShouldBe(0);
 		}
 
 		/// <summary>
 		/// Ensures that the legend is rendered with one entry per slice
-		/// when ShowLegend = true.
+		/// when <c>ShowLegend = true</c>.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void Legend_IsRendered_WhenEnabled()
 		{
 			var cut = Render<DonutChart>(p => p
@@ -126,40 +127,40 @@ namespace BlazorControls.Components.Tests
 				.Add(x => x.ShowLegend, true)
 			);
 
-			Assert.HasCount(2, cut.FindAll("ul.donut-legend li"));
+			cut.FindAll("ul.donut-legend li").Count.ShouldBe(2);
 		}
 
 		/// <summary>
 		/// Verifies that no SVG slice paths are rendered when all data values are zero.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void NoSlices_RendersNoPaths()
 		{
 			var cut = Render<DonutChart>(p => p
 				.Add(x => x.Data, new() { { "A", 0 } })
 			);
 
-			Assert.IsEmpty(cut.FindAll("path.donut-slice"));
+			cut.FindAll("path.donut-slice").Count.ShouldBe(0);
 		}
 
 		/// <summary>
 		/// Ensures that a single slice is rendered when the dataset contains one entry.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void SingleSlice_RendersOnePath()
 		{
 			var cut = Render<DonutChart>(p => p
 				.Add(x => x.Data, new() { { "Only", 100 } })
 			);
 
-			Assert.HasCount(1, cut.FindAll("path.donut-slice"));
+			cut.FindAll("path.donut-slice").Count.ShouldBe(1);
 		}
 
 		/// <summary>
-		/// Verifies that clicking a slice triggers the OnSliceClick callback
-		/// and that the emitted ChartClickEventArgs contains the correct label.
+		/// Verifies that clicking a slice triggers the <see cref="DonutChart.OnSliceClick"/>
+		/// callback and that the emitted <see cref="ChartClickEventArgs"/> contains the correct label.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void SliceClick_InvokesCallback()
 		{
 			ChartClickEventArgs? received = null;
@@ -172,14 +173,14 @@ namespace BlazorControls.Components.Tests
 
 			cut.FindAll("path.donut-slice")[1].Click();
 
-			Assert.IsNotNull(received);
-			Assert.AreEqual("B", received!.SliceLabel);
+			received.ShouldNotBeNull();
+			received!.SliceLabel.ShouldBe("B");
 		}
 
 		/// <summary>
 		/// Ensures that hovering over a slice displays the tooltip.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void SliceHover_ShowsTooltip()
 		{
 			var cut = Render<DonutChart>(p => p
@@ -188,28 +189,28 @@ namespace BlazorControls.Components.Tests
 
 			cut.Find("path.donut-slice").MouseOver();
 
-			Assert.HasCount(1, cut.FindAll("div.donut-tooltip"));
+			cut.FindAll("div.donut-tooltip").Count.ShouldBe(1);
 		}
 
 		/// <summary>
 		/// Confirms that the SVG container and slice paths are rendered
 		/// when valid data is supplied.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void SvgAndPaths_AreRendered()
 		{
 			var cut = Render<DonutChart>(p => p
 				.Add(x => x.Data, new() { { "A", 10 }, { "B", 20 } })
 			);
 
-			Assert.HasCount(1, cut.FindAll("svg.donut-chart"));
-			Assert.HasCount(2, cut.FindAll("path.donut-slice"));
+			cut.FindAll("svg.donut-chart").Count.ShouldBe(1);
+			cut.FindAll("path.donut-slice").Count.ShouldBe(2);
 		}
 
 		/// <summary>
 		/// Verifies that the chart title is rendered when provided.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void Title_IsRendered()
 		{
 			var cut = Render<DonutChart>(p => p
@@ -217,26 +218,26 @@ namespace BlazorControls.Components.Tests
 				.Add(x => x.Title, "My Chart")
 			);
 
-			Assert.HasCount(1, cut.FindAll("h3.chart-title"));
+			cut.FindAll("h3.chart-title").Count.ShouldBe(1);
 		}
 
 		/// <summary>
 		/// Ensures that the tooltip is not visible before any hover interaction occurs.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void Tooltip_IsHiddenByDefault()
 		{
 			var cut = Render<DonutChart>(p => p
 				.Add(x => x.Data, new() { { "A", 10 } })
 			);
 
-			Assert.IsEmpty(cut.FindAll("div.donut-tooltip"));
+			cut.FindAll("div.donut-tooltip").Count.ShouldBe(0);
 		}
 
 		/// <summary>
 		/// Verifies that the tooltip becomes hidden again when the mouse leaves the chart.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void Tooltip_IsHiddenOnMouseLeave()
 		{
 			var cut = Render<DonutChart>(p => p
@@ -244,10 +245,10 @@ namespace BlazorControls.Components.Tests
 			);
 
 			cut.Find("path.donut-slice").MouseOver();
-			Assert.HasCount(1, cut.FindAll("div.donut-tooltip"));
+			cut.FindAll("div.donut-tooltip").Count.ShouldBe(1);
 
 			cut.Find("svg.donut-chart").MouseLeave();
-			Assert.IsEmpty(cut.FindAll("div.donut-tooltip"));
+			cut.FindAll("div.donut-tooltip").Count.ShouldBe(0);
 		}
 	}
 }

@@ -7,10 +7,11 @@
 <div class="chart-wrapper">
     <div class="home-checkboxlist">
 
-        <CheckBoxList TItem="string"
-                      Data="@AllTaskLabels"
-                      @bind-SelectedMap="SelectedTaskMap"
-                      UncheckedInitially="@(new List<string> { "Completed", "Blocked" })" />
+        <CheckBoxList Items="@AllTaskLabels"
+                      KeySelector="label => label"
+                      LabelSelector="label => label"
+                      CheckedSelector="label => SelectedTaskMap[label]"
+                      OnChanged="OnTaskChanged" />
 
     </div>
 
@@ -55,11 +56,6 @@
 </div>
 
 @code {
-    [Inject] private NavigationManager Nav { get; set; } = default!;
-
-    // -----------------------------
-    // Pie chart data
-    // -----------------------------
     private Dictionary<string, int> pieData = new()
     {
         ["Completed"] = 30,
@@ -75,45 +71,36 @@
 
     private List<string> AllTaskLabels => pieData.Keys.Order().ToList();
 
-    // -----------------------------
-    // SelectedMap binding
-    // -----------------------------
-    private Dictionary<string, int> SelectedTaskMap { get; set; } = new();
+    private Dictionary<string, bool> SelectedTaskMap = new();
 
-    // Derived list of labels for charts
     private List<string> CurrentTaskLabels =>
-        SelectedTaskMap.Keys.Order().ToList();
+        SelectedTaskMap.Where(kvp => kvp.Value).Select(kvp => kvp.Key).ToList();
 
-    // -----------------------------
-    // Timers (unchanged)
-    // -----------------------------
-    private System.Timers.Timer? _pieTimer;
-    private readonly Random _rand = new();
+    private Task OnTaskChanged((string Key, bool IsChecked) change)
+    {
+        SelectedTaskMap[change.Key] = change.IsChecked;
+        return Task.CompletedTask;
+    }
 
     protected override void OnInitialized()
     {
-        // Initial selection is handled by the component itself
-        // based on UncheckedInitially
+        SelectedTaskMap = AllTaskLabels.ToDictionary(label => label, _ => true);
+
+        // Example: hide two labels initially
+        SelectedTaskMap["Completed"] = false;
+        SelectedTaskMap["Blocked"] = false;
     }
 
     private void HandleSliceClick(ChartClickEventArgs e)
     {
         Console.WriteLine($"[Home] Slice clicked: {e.SliceLabel}");
-        Nav.NavigateTo("/counter");
     }
 
     private void HandleCenterClick(ChartClickEventArgs e)
     {
         Console.WriteLine("[Home] Center clicked");
-        Nav.NavigateTo("/weather");
     }
 
-    public void Dispose()
-    {
-        _pieTimer?.Dispose();
-    }
-
-    // Colours for Task chart
     private Dictionary<string, string> TaskColors = new()
     {
         ["Completed"] = "#4CAF50",

@@ -1,107 +1,31 @@
 ﻿@typeparam TItem
 
+@if (SelectAll.HasDelegate || ClearAll.HasDelegate)
+{
+    <div class="checkbox-actions">
+        @if (SelectAll.HasDelegate)
+        {
+            <button class="checkbox-action-button" @onclick="SelectAll">Select All</button>
+        }
+        @if (ClearAll.HasDelegate)
+        {
+            <button class="checkbox-action-button" @onclick="ClearAll">Clear All</button>
+        }
+    </div>
+}
+
 <div class="checkbox-list">
-    @foreach (var item in Data)
+    @foreach (var item in Items)
     {
-        string text = GetText(item);
-        string value = GetValue(item);
+        var key = KeySelector(item);
+        var label = LabelSelector(item);
+        var isChecked = CheckedSelector(item);
 
-        bool isChecked = SelectedValues.Contains(value);
-
-        <div class="checkbox-row">
+        <label class="checkbox-item">
             <input type="checkbox"
                    checked="@isChecked"
-                   @onchange="e => ToggleValue(value, text, e.Value)" />
-
-            <label>@text</label>
-        </div>
+                   @onchange="e => OnCheckboxChanged(key, e.Value)" />
+            @label
+        </label>
     }
 </div>
-
-@*
-    ============================================================
-    HOW TO USE THIS COMPONENT
-    ============================================================
-
-    <summary>
-        The CheckBoxList component renders a list of checkboxes from
-        any IEnumerable<TItem> source. It supports three two-way
-        bindings:
-
-        - @bind-SelectedValues : List<string>
-        - @bind-SelectedTexts  : List<string>
-        - @bind-SelectedMap    : Dictionary<string,int>
-
-        You may bind any combination of these depending on your needs.
-        SelectedMap is the most powerful and is recommended for most
-        scenarios.
-    </summary>
-
-    ------------------------------------------------------------
-    BASIC USAGE (STRING LIST)
-    ------------------------------------------------------------
-
-        <CheckBoxList Data="ColorList"
-                      @bind-SelectedValues="SelectedColors"
-                      @bind-SelectedTexts="SelectedColorNames"
-                      @bind-SelectedMap="SelectedColorMap" />
-
-    - Data items are used directly as both text and value.
-    - SelectedMap returns keys only (value = 0).
-
-
-    ------------------------------------------------------------
-    OBJECT LIST WITH TEXT + VALUE FIELDS
-    ------------------------------------------------------------
-
-        <CheckBoxList Data="EmployeeList"
-                      TextField="@(e => e.FullName)"
-                      ValueField="@(e => e.EmployeeId.ToString())"
-                      @bind-SelectedValues="SelectedIds"
-                      @bind-SelectedTexts="SelectedNames"
-                      @bind-SelectedMap="SelectedMap" />
-
-    - TextField defines what is shown to the user.
-    - ValueField defines the unique key.
-    - SelectedMap returns key:index (selection order).
-
-
-    ------------------------------------------------------------
-    DICTIONARY SUPPORT (KEY → VALUE)
-    ------------------------------------------------------------
-
-        <CheckBoxList Data="StatusList"
-                      TextField="@(s => s.Key)"
-                      ValueField="@(s => s.Key)"
-                      @bind-SelectedMap="SelectedStatusMap" />
-
-    - When Data is Dictionary<string,int>, SelectedMap returns:
-        key : dictionaryValue
-      Example:
-        "Open":12, "Closed":30
-
-
-    ------------------------------------------------------------
-    UNCHECKEDINITIALLY
-    ------------------------------------------------------------
-
-        <CheckBoxList Data="ColorList"
-                      UncheckedInitially="@(new[] { "Blue" })"
-                      @bind-SelectedMap="SelectedColorMap" />
-
-    - All items start checked except those listed in UncheckedInitially.
-
-
-    ------------------------------------------------------------
-    NOTES
-    ------------------------------------------------------------
-
-    - You may bind only SelectedMap if you do not need values or texts.
-    - The component automatically emits initial selections on first render.
-    - Works with:
-        • string lists
-        • object lists
-        • dictionary lists
-    - SelectedMap is the recommended binding for most real-world scenarios.
-
-*@

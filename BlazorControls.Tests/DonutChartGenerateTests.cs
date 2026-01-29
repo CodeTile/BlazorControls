@@ -1,7 +1,8 @@
 ﻿using System.Linq;
 using Bunit;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using BlazorControls.Components;
+using Shouldly;
+using Xunit;
 
 namespace BlazorControls.Components.Tests
 {
@@ -14,46 +15,45 @@ namespace BlazorControls.Components.Tests
 	/// interacting with rendered DOM elements.
 	/// </para>
 	/// </summary>
-	[TestClass]
 	public class DonutChartGenerateTests : BunitContext
 	{
 		/// <summary>
 		/// Ensures that when <c>Data</c> is null, the chart produces no slices.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void DataNull_ProducesNoSlices()
 		{
 			var cut = Render<DonutChart>(p => p
 				.Add(x => x.Data, null)
 			);
 
-			Assert.IsEmpty(cut.Instance.Slices);
+			cut.Instance.Slices.ShouldBeEmpty();
 		}
 
 		/// <summary>
 		/// Verifies that default colors are applied in a cyclic (round‑robin)
 		/// sequence when more slices exist than colors.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void DefaultColors_AreAppliedInCyclicOrder()
 		{
 			var cut = Render<DonutChart>(p => p
 				.Add(x => x.Data, new() { { "A", 10 }, { "B", 20 }, { "C", 30 } })
-				.Add(x => x.DefaultColors, new() { "#AA", "#BB" })
+				.Add(x => x.DefaultColors, ["#AA", "#BB"])
 			);
 
 			var slices = cut.Instance.Slices;
 
-			Assert.AreEqual("#AA", slices.Single(s => s.Label == "A").Color);
-			Assert.AreEqual("#BB", slices.Single(s => s.Label == "B").Color);
-			Assert.AreEqual("#AA", slices.Single(s => s.Label == "C").Color);
+			slices.Single(s => s.Label == "A").Color.ShouldBe("#AA");
+			slices.Single(s => s.Label == "B").Color.ShouldBe("#BB");
+			slices.Single(s => s.Label == "C").Color.ShouldBe("#AA");
 		}
 
 		/// <summary>
 		/// Ensures that explicit status colors override default colors
 		/// when both are provided.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void DefaultColors_AreIgnoredWhenStatusColorExists()
 		{
 			var cut = Render<DonutChart>(p => p
@@ -64,15 +64,15 @@ namespace BlazorControls.Components.Tests
 
 			var slices = cut.Instance.Slices;
 
-			Assert.AreEqual("#111111", slices.Single(s => s.Label == "A").Color);
-			Assert.AreEqual("#222222", slices.Single(s => s.Label == "B").Color);
+			slices.Single(s => s.Label == "A").Color.ShouldBe("#111111");
+			slices.Single(s => s.Label == "B").Color.ShouldBe("#222222");
 		}
 
 		/// <summary>
 		/// Confirms that when no default colors or status colors are supplied,
 		/// the component generates a stable fallback HSL color.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void GeneratedColor_IsUsedWhenNoDefaultsOrStatusColors()
 		{
 			var cut = Render<DonutChart>(p => p
@@ -83,14 +83,14 @@ namespace BlazorControls.Components.Tests
 
 			var color = cut.Instance.Slices.Single().Color;
 
-			StringAssert.StartsWith(color, "hsl(");
+			color.ShouldStartWith("hsl(");
 		}
 
 		/// <summary>
 		/// Ensures that <c>IncludeLabels</c> correctly filters the dataset
 		/// before slice generation.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void IncludeLabels_FiltersDataCorrectly()
 		{
 			var cut = Render<DonutChart>(p => p
@@ -100,14 +100,14 @@ namespace BlazorControls.Components.Tests
 
 			var labels = cut.Instance.Slices.Select(s => s.Label).ToArray();
 
-			CollectionAssert.AreEquivalent(new[] { "A", "C" }, labels);
+			labels.ShouldBe(new[] { "A", "C" });
 		}
 
 		/// <summary>
 		/// Verifies that the inner radius is always zero when the chart
 		/// is configured as a pie (IsDonut = false).
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void InnerRadius_IsZeroWhenNotDonut()
 		{
 			var cut = Render<DonutChart>(p => p
@@ -115,14 +115,14 @@ namespace BlazorControls.Components.Tests
 				.Add(x => x.Thickness, 20)
 			);
 
-			Assert.AreEqual(0, cut.Instance.InnerRadius);
+			cut.Instance.InnerRadius.ShouldBe(0);
 		}
 
 		/// <summary>
 		/// Ensures that excessively large thickness values do not produce
 		/// negative inner radii and instead clamp to zero.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void InnerRadius_IsZeroWhenThicknessTooLarge()
 		{
 			var cut = Render<DonutChart>(p => p
@@ -130,14 +130,14 @@ namespace BlazorControls.Components.Tests
 				.Add(x => x.Thickness, 999)
 			);
 
-			Assert.AreEqual(0, cut.Instance.InnerRadius);
+			cut.Instance.InnerRadius.ShouldBe(0);
 		}
 
 		/// <summary>
 		/// Confirms that the inner radius is computed as
 		/// <c>90 - Thickness</c> when in donut mode.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void InnerRadius_UsesThicknessCorrectly()
 		{
 			var cut = Render<DonutChart>(p => p
@@ -145,14 +145,14 @@ namespace BlazorControls.Components.Tests
 				.Add(x => x.Thickness, 20)
 			);
 
-			Assert.AreEqual(70, cut.Instance.InnerRadius);
+			cut.Instance.InnerRadius.ShouldBe(70);
 		}
 
 		/// <summary>
 		/// Ensures that explicit status colors override default colors
 		/// when both are provided.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void StatusColors_OverrideDefaults()
 		{
 			var cut = Render<DonutChart>(p => p
@@ -161,27 +161,27 @@ namespace BlazorControls.Components.Tests
 				.Add(x => x.DefaultColors, new() { "#000000" })
 			);
 
-			Assert.AreEqual("#ABCDEF", cut.Instance.Slices.Single().Color);
+			cut.Instance.Slices.Single().Color.ShouldBe("#ABCDEF");
 		}
 
 		/// <summary>
 		/// Verifies that <c>TotalValue</c> correctly sums the values
 		/// of all generated slices.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void TotalValue_ComputesSumCorrectly()
 		{
 			var cut = Render<DonutChart>(p => p
 				.Add(x => x.Data, new() { { "A", 5 }, { "B", 15 } })
 			);
 
-			Assert.AreEqual(20, cut.Instance.TotalValue);
+			cut.Instance.TotalValue.ShouldBe(20);
 		}
 
 		/// <summary>
 		/// Ensures that zero or negative values are excluded from slice generation.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void ZeroOrNegativeValues_AreIgnored()
 		{
 			var cut = Render<DonutChart>(p => p
@@ -190,21 +190,21 @@ namespace BlazorControls.Components.Tests
 
 			var slices = cut.Instance.Slices;
 
-			Assert.HasCount(1, slices);
-			Assert.AreEqual("C", slices[0].Label);
+			slices.Count.ShouldBe(1);
+			slices[0].Label.ShouldBe("C");
 		}
 
 		/// <summary>
 		/// Confirms that when all values are zero, the chart produces no slices.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void ZeroTotal_ProducesNoSlices()
 		{
 			var cut = Render<DonutChart>(p => p
 				.Add(x => x.Data, new() { { "A", 0 }, { "B", 0 } })
 			);
 
-			Assert.IsEmpty(cut.Instance.Slices);
+			cut.Instance.Slices.ShouldBeEmpty();
 		}
 	}
 }

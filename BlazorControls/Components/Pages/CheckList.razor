@@ -1,6 +1,5 @@
 ﻿@page "/checklist"
 @using BlazorControls.Components
-@using BlazorControls.Data
 @using BlazorControls.Data.Models
 @rendermode InteractiveServer
 
@@ -10,26 +9,31 @@
 <!-- Scenario 1: Employees -->
 <h3>1. Employees (Object List)</h3>
 
-<CheckBoxList Data="@EmployeeList"
-              TextField="@(e => e.FullName)"
-              ValueField="@(e => e.EmployeeId.ToString())"
-              @bind-SelectedValues="SelectedEmployeeIds"
-              @bind-SelectedTexts="SelectedEmployeeNames"
-              @bind-SelectedMap="SelectedEmployeeMap" />
+<CheckBoxList Items="@EmployeeList"
+              KeySelector="e => e.EmployeeId.ToString()"
+              LabelSelector="e => e.FullName"
+              CheckedSelector="e => SelectedEmployeeMap[e.EmployeeId.ToString()]"
+              OnChanged="OnEmployeeChanged"
+              SelectAll="SelectAllEmployees"
+              ClearAll="ClearAllEmployees" />
+
 
 <div class="output-row">
     <label>Selected Employee Values:</label>
-    @string.Join(", ", SelectedEmployeeIds)
+    @string.Join(", ", SelectedEmployeeMap.Where(kvp => kvp.Value).Select(kvp => kvp.Key))
 </div>
 
 <div class="output-row">
     <label>Selected Employee Texts:</label>
-    @string.Join(", ", SelectedEmployeeNames)
+    @string.Join(", ", EmployeeList
+        .Where(e => SelectedEmployeeMap[e.EmployeeId.ToString()])
+        .Select(e => e.FullName))
 </div>
 
 <div class="output-row">
     <label>Selected Employee Map:</label>
-    @EmployeeMapOutput
+    @string.Join(", ", SelectedEmployeeMap.OrderBy(kvp => kvp.Key)
+        .Select(kvp => $"{kvp.Key}:{kvp.Value}"))
 </div>
 
 <br />
@@ -37,25 +41,26 @@
 <!-- Scenario 2: Colors -->
 <h3>2. Colors (Strings)</h3>
 
-<CheckBoxList Data="@ColorList"
-              @bind-SelectedValues="SelectedColors"
-              @bind-SelectedTexts="SelectedColorNames"
-              @bind-SelectedMap="SelectedColorMap"
-              UncheckedInitially="@(new string[] { "Blue" })" />
+<CheckBoxList Items="@ColorList"
+              KeySelector="c => c"
+              LabelSelector="c => c"
+              CheckedSelector="c => SelectedColorMap[c]"
+              OnChanged="OnColorChanged" />
 
 <div class="output-row">
     <label>Selected Color Values:</label>
-    @string.Join(", ", SelectedColors)
+    @string.Join(", ", SelectedColorMap.Where(kvp => kvp.Value).Select(kvp => kvp.Key))
 </div>
 
 <div class="output-row">
     <label>Selected Color Texts:</label>
-    @string.Join(", ", SelectedColorNames)
+    @string.Join(", ", SelectedColorMap.Where(kvp => kvp.Value).Select(kvp => kvp.Key))
 </div>
 
 <div class="output-row">
     <label>Selected Color Map:</label>
-    @ColorOutput
+    @string.Join(", ", SelectedColorMap.OrderBy(kvp => kvp.Key)
+        .Select(kvp => $"{kvp.Key}:{kvp.Value}"))
 </div>
 
 <br />
@@ -63,41 +68,43 @@
 <!-- Scenario 3: Departments -->
 <h3>3. Departments (Strings)</h3>
 
-<CheckBoxList Data="@DepartmentList"
-              TextField="@(d => d)"
-              ValueField="@(d => d)"
-              @bind-SelectedValues="SelectedDepartments"
-              @bind-SelectedTexts="SelectedDepartmentNames"
-              @bind-SelectedMap="SelectedDepartmentMap" />
+<CheckBoxList Items="@DepartmentList"
+              KeySelector="d => d"
+              LabelSelector="d => d"
+              CheckedSelector="d => SelectedDepartmentMap[d]"
+              OnChanged="OnDepartmentChanged" />
 
 <div class="output-row">
     <label>Selected Department Values:</label>
-    @string.Join(", ", SelectedDepartments)
+    @string.Join(", ", SelectedDepartmentMap.Where(kvp => kvp.Value).Select(kvp => kvp.Key))
 </div>
 
 <div class="output-row">
     <label>Selected Department Texts:</label>
-    @string.Join(", ", SelectedDepartmentNames)
+    @string.Join(", ", SelectedDepartmentMap.Where(kvp => kvp.Value).Select(kvp => kvp.Key))
 </div>
 
 <div class="output-row">
     <label>Selected Department Map:</label>
-    @DepartmentOutput
+    @string.Join(", ", SelectedDepartmentMap.OrderBy(kvp => kvp.Key)
+        .Select(kvp => $"{kvp.Key}:{kvp.Value}"))
 </div>
 
 <br />
 
-<!-- Scenario 4: Status Dictionary (Map Only) -->
+<!-- Scenario 4: Status Dictionary -->
 <h3>4. Statuses (Dictionary)</h3>
 
-<CheckBoxList Data="@StatusList"
-              TextField="@(kvp => kvp.Key)"
-              ValueField="@(kvp => kvp.Key)"
-              @bind-SelectedMap="SelectedStatusMap" />
+<CheckBoxList Items="@StatusList"
+              KeySelector="kvp => kvp.Key"
+              LabelSelector="kvp => kvp.Key"
+              CheckedSelector="kvp => SelectedStatusMap[kvp.Key]"
+              OnChanged="OnStatusChanged" />
 
 <div class="output-row">
     <label>Selected Status Map:</label>
-    @StatusMapOutput
+    @string.Join(", ", SelectedStatusMap.OrderBy(kvp => kvp.Key)
+        .Select(kvp => $"{kvp.Key}:{kvp.Value}"))
 </div>
 
 @code {
@@ -109,33 +116,35 @@
         new Employee { EmployeeId = 3, FirstName = "Charlie", LastName = "Brown" }
     };
 
-    private List<string> SelectedEmployeeIds { get; set; } = new();
-    private List<string> SelectedEmployeeNames { get; set; } = new();
-    private Dictionary<string, int> SelectedEmployeeMap { get; set; } = new();
+    private Dictionary<string, bool> SelectedEmployeeMap = new();
 
-    private string EmployeeMapOutput =>
-        string.Join(", ", SelectedEmployeeMap.OrderBy(kvp => kvp.Key)
-            .Select(kvp => $"{kvp.Key}:{kvp.Value}"));
+    private Task OnEmployeeChanged((string Key, bool IsChecked) change)
+    {
+        SelectedEmployeeMap[change.Key] = change.IsChecked;
+        return Task.CompletedTask;
+    }
 
     // Colors
     private List<string> ColorList = new() { "Red", "Green", "Blue", "Yellow" };
-    private List<string> SelectedColors { get; set; } = new();
-    private List<string> SelectedColorNames { get; set; } = new();
-    private Dictionary<string, int> SelectedColorMap { get; set; } = new();
+    private Dictionary<string, bool> SelectedColorMap = new();
 
-    private string ColorOutput =>
-        string.Join(", ", SelectedColorMap.OrderBy(kvp => kvp.Key).Select(kvp => kvp.Key));
+    private Task OnColorChanged((string Key, bool IsChecked) change)
+    {
+        SelectedColorMap[change.Key] = change.IsChecked;
+        return Task.CompletedTask;
+    }
 
     // Departments
     private List<string> DepartmentList = new() { "HR", "Finance", "IT", "Sales" };
-    private List<string> SelectedDepartments { get; set; } = new();
-    private List<string> SelectedDepartmentNames { get; set; } = new();
-    private Dictionary<string, int> SelectedDepartmentMap { get; set; } = new();
+    private Dictionary<string, bool> SelectedDepartmentMap = new();
 
-    private string DepartmentOutput =>
-        string.Join(", ", SelectedDepartmentMap.OrderBy(kvp => kvp.Key).Select(kvp => kvp.Key));
+    private Task OnDepartmentChanged((string Key, bool IsChecked) change)
+    {
+        SelectedDepartmentMap[change.Key] = change.IsChecked;
+        return Task.CompletedTask;
+    }
 
-    // Statuses (Map Only)
+    // Statuses
     private Dictionary<string, int> StatusList = new()
     {
         { "Open", 12 },
@@ -144,9 +153,36 @@
         { "On Hold", 3 }
     };
 
-    private Dictionary<string, int> SelectedStatusMap { get; set; } = new();
+    private Dictionary<string, bool> SelectedStatusMap = new();
 
-    private string StatusMapOutput =>
-        string.Join(", ", SelectedStatusMap.OrderBy(kvp => kvp.Key)
-            .Select(kvp => $"{kvp.Key}:{kvp.Value}"));
+    private Task OnStatusChanged((string Key, bool IsChecked) change)
+    {
+        SelectedStatusMap[change.Key] = change.IsChecked;
+        return Task.CompletedTask;
+    }
+
+    protected override void OnInitialized()
+    {
+        // Initialize all maps to false
+        SelectedEmployeeMap = EmployeeList.ToDictionary(e => e.EmployeeId.ToString(), _ => false);
+        SelectedColorMap = ColorList.ToDictionary(c => c, _ => false);
+        SelectedDepartmentMap = DepartmentList.ToDictionary(d => d, _ => false);
+        SelectedStatusMap = StatusList.Keys.ToDictionary(k => k, _ => false);
+    }
+    private Task SelectAllEmployees()
+    {
+        foreach (var key in SelectedEmployeeMap.Keys.ToList())
+            SelectedEmployeeMap[key] = true;
+
+        return Task.CompletedTask;
+    }
+
+    private Task ClearAllEmployees()
+    {
+        foreach (var key in SelectedEmployeeMap.Keys.ToList())
+            SelectedEmployeeMap[key] = false;
+
+        return Task.CompletedTask;
+    }
+
 }

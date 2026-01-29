@@ -3,7 +3,9 @@ using System.Linq;
 
 using BlazorControls.Components;
 
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Shouldly;
+
+using Xunit;
 
 namespace BlazorControls.Components.Tests
 {
@@ -13,7 +15,7 @@ namespace BlazorControls.Components.Tests
 	/// sweep angles, large‑arc flags, and proportional slice geometry
 	/// correctly according to SVG arc rules.
 	/// </summary>
-	[TestClass]
+
 	public class DonutSliceMathTests
 	{
 		/// <summary>
@@ -21,28 +23,28 @@ namespace BlazorControls.Components.Tests
 		/// correctly set the SVG large‑arc flag to <c>1</c> for both
 		/// outer and inner arcs.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void LargeArcFlag_IsOne_WhenSweepIsLarge()
 		{
 			var slice = new DonutSlice("Large", 75, 0, 270, 90, 70, "#ABCDEF");
 			var path = slice.PathData;
 
-			StringAssert.Contains(path, "A 90 90 0 1 1");
-			StringAssert.Contains(path, "A 70 70 0 1 0");
+			path.ShouldContain("A 90 90 0 1 1");
+			path.ShouldContain("A 70 70 0 1 0");
 		}
 
 		/// <summary>
 		/// Ensures that slices with a sweep angle of 180° or less
 		/// correctly set the SVG large‑arc flag to <c>0</c>.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void LargeArcFlag_IsZero_WhenSweepIsSmall()
 		{
 			var slice = new DonutSlice("Small", 10, 0, 180, 90, 70, "#AAAAAA");
 			var path = slice.PathData;
 
-			StringAssert.Contains(path, "A 90 90 0 0 1");
-			StringAssert.Contains(path, "A 70 70 0 0 0");
+			path.ShouldContain("A 90 90 0 0 1");
+			path.ShouldContain("A 70 70 0 0 0");
 		}
 
 		/// <summary>
@@ -50,7 +52,7 @@ namespace BlazorControls.Components.Tests
 		/// underlying data values and that the resulting SVG arc flags
 		/// reflect the correct sweep size.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void SweepAngles_AreProportionalToValues()
 		{
 			// Arrange
@@ -66,15 +68,15 @@ namespace BlazorControls.Components.Tests
 			var sliceB = chart.Slices.Single(s => s.Label == "B");
 
 			// Assert
-			StringAssert.Contains(sliceB.PathData, "A 90 90 0 1 1"); // large sweep
-			StringAssert.Contains(sliceA.PathData, "A 90 90 0 0 1"); // small sweep
+			sliceB.PathData.ShouldContain("A 90 90 0 1 1"); // large sweep
+			sliceA.PathData.ShouldContain("A 90 90 0 0 1"); // small sweep
 		}
 
 		/// <summary>
 		/// Ensures that <see cref="DonutChart.TotalValue"/> correctly
 		/// computes the sum of all slice values after slice generation.
 		/// </summary>
-		[TestMethod]
+		[Fact]
 		public void TotalValue_IsSumOfAllSliceValues()
 		{
 			var chart = new DonutChart
@@ -84,7 +86,7 @@ namespace BlazorControls.Components.Tests
 
 			chart.BuildSlices();
 
-			Assert.AreEqual(60, chart.TotalValue);
+			chart.TotalValue.ShouldBe(60);
 		}
 	}
 }
